@@ -65,10 +65,9 @@ const setActiveTab = (tab: string) => {
 <style scoped>
 .bottom-navigation {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
+  bottom: -1px;
+  width: 101%;
+  height: 70px;
   background-color: #2d2d2d;
   display: flex;
   justify-content: space-around;
@@ -79,6 +78,7 @@ const setActiveTab = (tab: string) => {
 
 .nav-item {
   display: flex;
+  width: 100%;
   flex-direction: column;
   align-items: center;
   justify-content: center;

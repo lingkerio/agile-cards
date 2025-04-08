@@ -38,6 +38,7 @@ const cardGroups = ref([
 
 // 处理卡片组点击
 const handleCardClick = (id: number) => {
+  console.log(`Card with ID ${id} clicked!`);
   router.push(`/card/${id}`);
 };
 
@@ -64,9 +65,10 @@ onMounted(() => {
           :title="group.title"
           :subtitle="group.subtitle"
           :image="group.image"
+          :id="group.id"
           class="card-item"
-          @click="handleCardClick(group.id)"
-        />
+          />
+          <!-- @click="handleCardClick(group.id)" -->
       </div>
     </div>
     
@@ -90,7 +92,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding-bottom: 20px;
+  padding-bottom: 0px;
 }
 
 .card-item {

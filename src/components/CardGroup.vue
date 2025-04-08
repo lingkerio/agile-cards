@@ -1,13 +1,26 @@
 <script setup lang="ts">
-defineProps<{
+import { ref } from 'vue';
+import { defineProps } from 'vue';
+import { useRouter } from 'vue-router';
+import { motion } from 'motion-v';
+
+const router = useRouter();
+
+const props = defineProps<{
   title: string;
   subtitle: string;
   image: string;
+  id: number;
 }>();
+
+const isClicked = () => {
+  console.log('is clicked');
+  router.push(`/card/${props.id}`);
+};
 </script>
 
 <template>
-  <div class="card-group">
+  <div class="card-group" ref="cardRef" @click="isClicked">
     <div class="card-image">
       <img :src="image" :alt="title" />
     </div>
@@ -22,13 +35,14 @@ defineProps<{
 .card-group {
   position: relative;
   width: 95%;
-  height: 700px;
+  height: 600px;
   border-radius: 10px;
   overflow: hidden;
   margin: auto;
   margin-bottom: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
 .card-group:hover {

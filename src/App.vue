@@ -4,7 +4,9 @@ import BottomNavigation from './components/BottomNavigation.vue';
 
 <template>
   <div class="app">
-    <router-view />
+    <transition name="fade" mode="out-in">
+      <router-view />
+    </transition>
     <BottomNavigation />
   </div>
 </template>
@@ -25,5 +27,16 @@ body {
 .app {
   min-height: 100vh;
   position: relative;
+}
+
+/* 路由过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
