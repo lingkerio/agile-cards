@@ -5,14 +5,30 @@ import ChatPage from '@/views/ChatPage.vue'
 import FilePage from '@/views/FilePage.vue'
 import CardDetailPage from '@/views/CardDetailPage.vue'
 import AddCardGroupPage from '@/views/AddCardGroupPage.vue'
+import LibPage from '@/views/LibPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
+      redirect: '/home'
+    },
+    {
+      path: '/home',
       name: 'home',
       component: HomePage
+    },
+    {
+      path: '/lib',
+      name: 'lib',
+      component: LibPage
+    },
+    {
+      path: '/lib/:filter',
+      name: 'filtered-library',
+      component: LibPage,
+      props: true
     },
     {
       path: '/class',
@@ -35,7 +51,7 @@ const router = createRouter({
       component: CardDetailPage
     },
     {
-      path: '/add-card-group',
+      path: '/home/add-card-group',
       name: 'add-card-group',
       component: AddCardGroupPage
     }

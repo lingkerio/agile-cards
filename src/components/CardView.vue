@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { defineProps } from 'vue';
+import { ref, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
-import { motion } from 'motion-v';
 
 const router = useRouter();
-
 const props = defineProps<{
   title: string;
   subtitle: string;
@@ -13,46 +10,45 @@ const props = defineProps<{
   id: number;
 }>();
 
-const isClicked = () => {
-  console.log('is clicked');
-  router.push(`/card/${props.id}`);
+const handleClick = () => {
+  router.push(`/lib/${props.title}`);
 };
 </script>
 
 <template>
-  <div class="card-group" ref="cardRef" @click="isClicked">
+  <div 
+    ref="cardRef"
+    class="card-view" 
+    @click="handleClick"
+  >
     <div class="card-image">
       <img :src="image" :alt="title" />
     </div>
     <div class="card-content">
-      <h3>{{ title }}</h3>
+      <h2>{{ title }}</h2>
       <p>{{ subtitle }}</p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.card-group {
+.card-view {
   position: relative;
-  width: 95%;
-  height: 600px;
-  border-radius: 10px;
+  height: 400px;
+  border-radius: 15px;
   overflow: hidden;
-  margin: auto;
+  margin: 0;
   margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
+  transition: all 0.3s ease;
   cursor: pointer;
-}
-
-.card-group:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  background-color: green;
 }
 
 .card-image {
   width: 100%;
   height: 100%;
+  transition: height 0.3s ease;
 }
 
 .card-image img {
@@ -66,11 +62,12 @@ const isClicked = () => {
   bottom: 0;
   left: 0;
   padding: 16px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  /* background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent); */
   width: 100%;
+  transition: all 0.3s ease;
 }
 
-.card-content h3 {
+.card-content h2 {
   color: white;
   margin: 0 0 4px 0;
   font-size: 18px;

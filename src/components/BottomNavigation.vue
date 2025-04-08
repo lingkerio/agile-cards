@@ -7,12 +7,13 @@ const route = useRoute();
 
 const activeTab = computed(() => {
   const path = route.path;
-  if (path === '/') return 'home';
-  return path.slice(1); // 移除开头的 '/'
+  if (!path || path === '/') return '';
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return cleanPath.split('/')[0]
 });
 
 const setActiveTab = (tab: string) => {
-  const path = tab === 'home' ? '/' : `/${tab}`;
+  const path = `/${tab}`;
   router.push(path);
 };
 </script>
@@ -30,6 +31,16 @@ const setActiveTab = (tab: string) => {
       <span>Home</span>
     </div>
     <div 
+      class="nav-item" 
+      :class="{ active: activeTab === 'lib' }" 
+      @click="setActiveTab('lib')"
+    >
+      <div class="icon">
+        <img src="@/assets/icons/lib.svg" alt="Lib" />
+      </div>
+      <span>Lib</span>
+    </div>
+    <!-- <div 
       class="nav-item" 
       :class="{ active: activeTab === 'class' }" 
       @click="setActiveTab('class')"
@@ -58,7 +69,7 @@ const setActiveTab = (tab: string) => {
         <img src="@/assets/icons/file.svg" alt="File" />
       </div>
       <span>File</span>
-    </div>
+    </div> -->
   </nav>
 </template>
 
@@ -73,7 +84,7 @@ const setActiveTab = (tab: string) => {
   justify-content: space-around;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 100;
+  z-index: 1000;
 }
 
 .nav-item {
@@ -90,7 +101,7 @@ const setActiveTab = (tab: string) => {
 }
 
 .nav-item.active {
-  color: #fff;
+  color: #ffffff;
 }
 
 .icon {

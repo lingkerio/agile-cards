@@ -54,26 +54,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 卡片展开动画 */
-.card-expand-enter-active {
-  animation: expand 0.4s ease-out forwards;
-}
-
-.card-expand-leave-active {
-  animation: expand 0.4s ease-in reverse;
-}
-
-@keyframes expand {
-  0% {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 .card-content {
   margin-top: 20px;
   width: 100%;

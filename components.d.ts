@@ -11,6 +11,7 @@ declare module 'vue' {
     AddButton: typeof import('./src/components/AddButton.vue')['default']
     BottomNavigation: typeof import('./src/components/BottomNavigation.vue')['default']
     CardGroup: typeof import('./src/components/CardGroup.vue')['default']
+    CardView: typeof import('./src/components/CardView.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TopBar: typeof import('./src/components/TopBar.vue')['default']

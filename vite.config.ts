@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
-    vueDevTools(),
+    // vueDevTools(),
     Components({
       dts: true,
       resolvers: [
