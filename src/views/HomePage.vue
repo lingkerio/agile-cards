@@ -21,7 +21,9 @@ onMounted(() => {
 
 <template>
   <div class="home-page">
-    <TopBar />
+    <TopBar 
+      :info="'Username'"
+      :status="'Online'"/>
     
     <div class="card-list">
       <h1>Card List</h1>
@@ -76,31 +78,34 @@ onMounted(() => {
   padding: 10px; /* 内边距 */
   padding-bottom: 0%;
   /* Customize scrollbar */
-  scrollbar-width: thin;  /* For Firefox */
-  scrollbar-color: #107c10 transparent;  /* For Firefox */
+  /* scrollbar-width: thin; 
+  scrollbar-color: #107c10 transparent;  For Firefox */
 }
 
 /* For Webkit browsers like Chrome/Safari */
 .horizon-list::-webkit-scrollbar {
-  height: 6px;
+  height: 5px;
 }
 
 .horizon-list::-webkit-scrollbar-track {
-  background: transparent;
+  background: #2d2d2d;
+  -webkit-border-radius: 2.5px;
+  margin: 0 10px;
 }
 
 .horizon-list::-webkit-scrollbar-thumb {
   background-color: #107c10;
-  border-radius: 6px;
+  -webkit-border-radius: 2.5px;
 }
 
 .horizon-list::-webkit-scrollbar-thumb:hover {
   background-color: #0e6a0e;
+  -webkit-border-radius: 2.5px;
 }
 
 .card-item {
   flex: 0 0 auto;
-  width: 300px;
+  width: 85vw;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   background: none;

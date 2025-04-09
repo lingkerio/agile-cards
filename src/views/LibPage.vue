@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useCardsStore } from '@/stores/cards'
 import { useCardGroupsStore } from '@/stores/cardGroups'
+import TopBar from '@/components/TopBar.vue'
 
 const props = defineProps<{
   filter?: string
@@ -14,7 +15,6 @@ const { cardGroups } = cardGroupsStore
 
 const searchQuery = ref('')
 const activeFilter = ref('all')
-const currentSearchTerm = ref('')
 
 onMounted(() => {
   if (props.filter) {
@@ -22,13 +22,8 @@ onMounted(() => {
   }
 })
 
-const handleSearch = () => {
-  currentSearchTerm.value = searchQuery.value
-}
-
 const clearSearch = () => {
   searchQuery.value = '';
-  currentSearchTerm.value = '';
 }
 
 const filteredCards = computed(() => {
@@ -43,8 +38,8 @@ const filteredCards = computed(() => {
   }
 
   // Then apply search query
-  if (currentSearchTerm.value) {
-    const query = currentSearchTerm.value.toLowerCase()
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(card => 
       card.question.toLowerCase().includes(query) || 
       card.answer.toLowerCase().includes(query)
@@ -61,45 +56,46 @@ const setActiveFilter = (filter: string) => {
 
 <template>
   <div class="lib-page">
+    <TopBar 
+      :info="'Library'"
+      :status="'4 groups'"/>
     <div class="controls">
-      <div class="search-container">
-        <div class="input-wrapper">
-          <input 
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search cards..."
-            class="search-input"
-            @keyup.enter="handleSearch"
-          />
+      <div style="width: 90%; margin: 0 auto;">
+        <div class="search-container">
+          <div class="input-wrapper">
+            <input 
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search cards..."
+              class="search-input"
+            />
+            <button 
+              v-if="searchQuery"
+              class="clear-button"
+              @click="clearSearch"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+        <div class="filter-tabs">
           <button 
-            v-if="searchQuery"
-            class="clear-button"
-            @click="clearSearch"
+            class="filter-tab"
+            :class="{ active: activeFilter === 'all' }"
+            @click="setActiveFilter('all')"
           >
-            ×
+            All
+          </button>
+          <button 
+            v-for="group in cardGroups" 
+            :key="group.id"
+            class="filter-tab"
+            :class="{ active: activeFilter === group.title }"
+            @click="setActiveFilter(group.title)"
+          >
+            {{ group.title }}
           </button>
         </div>
-        <button class="search-button" @click="handleSearch">
-          Search
-        </button>
-      </div>
-      <div class="filter-tabs">
-        <button 
-          class="filter-tab"
-          :class="{ active: activeFilter === 'all' }"
-          @click="setActiveFilter('all')"
-        >
-          All
-        </button>
-        <button 
-          v-for="group in cardGroups" 
-          :key="group.id"
-          class="filter-tab"
-          :class="{ active: activeFilter === group.title }"
-          @click="setActiveFilter(group.title)"
-        >
-          {{ group.title }}
-        </button>
       </div>
     </div>
 
@@ -109,6 +105,7 @@ const setActiveFilter = (filter: string) => {
         <p>{{ card.answer }}</p>
       </div>
     </div>
+    
   </div>
 </template>
 
@@ -116,15 +113,18 @@ const setActiveFilter = (filter: string) => {
 .lib-page {
   padding: 20px;
   background-color: #1e1e1e;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;  /* 防止页面本身滚动 */
 }
 
 .controls {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: 70px;
+  width: 100vw;
+  left: 0;
   background-color: #1e1e1e;
-  padding: 20px 0;
-  z-index: 10;
+  /* padding: 20px 0 0 0; */
+  z-index: 300;
 }
 
 .search-container {
@@ -143,7 +143,7 @@ const setActiveFilter = (filter: string) => {
   padding: 12px 20px;
   margin: 8px 0;
   border: 2px solid #333;
-  border-radius: 25px;
+  border-radius: 5px;
   font-size: 16px;
   outline: none;
   transition: border-color 0.3s;
@@ -156,7 +156,7 @@ const setActiveFilter = (filter: string) => {
 }
 
 .search-input:focus {
-  border-color: #2196f3;
+  border-color: #107c10;
 }
 
 .clear-button {
@@ -188,7 +188,7 @@ const setActiveFilter = (filter: string) => {
   margin: 8px 0;
   padding: 0 25px;
   border: none;
-  border-radius: 25px;
+  border-radius: 5px;
   background-color: #107c10;
   color: white;
   font-size: 16px;
@@ -203,36 +203,39 @@ const setActiveFilter = (filter: string) => {
 .filter-tabs {
   display: flex;
   gap: 10px;
-  margin: 15px 0;
+  margin: 5px 0;
   overflow-x: auto;
-  padding: 5px 0;
   /* Customize scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: #107c10 transparent;
+  /* scrollbar-width: thin;
+  scrollbar-color: #107c10 transparent; */
 }
 
 /* For Webkit browsers */
 .filter-tabs::-webkit-scrollbar {
-  height: 4px;
+  height: 5px;
 }
 
 .filter-tabs::-webkit-scrollbar-track {
   background: transparent;
+  background: #2d2d2d;
+  -webkit-border-radius: 2.5px;
 }
 
 .filter-tabs::-webkit-scrollbar-thumb {
-  background-color: #107c10;
-  border-radius: 6px;
+  background-color: #535353;
+  -webkit-border-radius: 2.5px;
 }
 
 .filter-tabs::-webkit-scrollbar-thumb:hover {
-  background-color: #0e6a0e;
+  background-color: #797979;
+  -webkit-border-radius: 2.5px;
 }
 
 .filter-tab {
   padding: 8px 16px;
   border: none;
-  border-radius: 20px;
+  margin-bottom: 10px;
+  border-radius: 5px;
   background-color: #2d2d2d;
   color: #888;
   cursor: pointer;
@@ -251,23 +254,54 @@ const setActiveFilter = (filter: string) => {
 }
 
 .cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
+  /* grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); */
+  position: fixed;
+  top: 200px;
+  left: 3vw;
   gap: 20px;
-  padding: 20px 0;
+  padding: 0 10px 30px 2vw;
+  height: calc(100vh - 260px);  /* 减去顶部控件和底部导航的高度 */
+  overflow-y: auto;
+  /* scrollbar-width: thin;
+  scrollbar-color: #107c10 transparent; */
+}
+
+/* Webkit scrollbar styles */
+.cards-grid::-webkit-scrollbar {
+  width: 5px;
+}
+
+.cards-grid::-webkit-scrollbar-track {
+  margin: 0 0 30px 0;
+  background: #2d2d2d;
+  -webkit-border-radius: 2.5px;
+}
+
+.cards-grid::-webkit-scrollbar-thumb {
+  background-color: #107c10;
+  -webkit-border-radius: 2.5px;
+}
+
+.cards-grid::-webkit-scrollbar-thumb:hover {
+  background-color: #0e6a0e;
+  -webkit-border-radius: 2.5px;
 }
 
 .card {
   padding: 20px;
   background-color: #107c10;
-  border-radius: 10px;
+  border-radius: 5px;
   color: white;
   cursor: pointer;
   transition: transform 0.2s ease;
+  /* height: 100px; */
+  width: calc(90vw - 15px);
 }
 
 .card:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 
 .card h3 {

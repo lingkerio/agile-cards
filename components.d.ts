@@ -10,7 +10,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddButton: typeof import('./src/components/AddButton.vue')['default']
     BottomNavigation: typeof import('./src/components/BottomNavigation.vue')['default']
-    CardGroup: typeof import('./src/components/CardGroup.vue')['default']
     CardView: typeof import('./src/components/CardView.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

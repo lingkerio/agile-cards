@@ -4,9 +4,14 @@ import BottomNavigation from './components/BottomNavigation.vue';
 
 <template>
   <div class="app">
-    <transition name="fade" mode="out-in">
+    <!-- <transition name="fade" mode="out-in">
       <router-view />
-    </transition>
+    </transition> -->
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
     <BottomNavigation />
   </div>
 </template>
@@ -32,7 +37,7 @@ body {
 /* 路由过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease-in-out;
 }
 
 .fade-enter-from,

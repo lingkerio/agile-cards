@@ -25,7 +25,7 @@ const router = createRouter({
       component: LibPage
     },
     {
-      path: '/lib/:filter',
+      path: '/lib/groups/:filter',
       name: 'filtered-library',
       component: LibPage,
       props: true

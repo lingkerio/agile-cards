@@ -11,7 +11,7 @@ const props = defineProps<{
 }>();
 
 const handleClick = () => {
-  router.push(`/lib/${props.title}`);
+  router.push(`/lib/groups/${props.title}`);
 };
 </script>
 
@@ -35,7 +35,7 @@ const handleClick = () => {
 .card-view {
   position: relative;
   height: 400px;
-  border-radius: 15px;
+  border-radius: 5px;
   overflow: hidden;
   margin: 0;
   margin-bottom: 16px;

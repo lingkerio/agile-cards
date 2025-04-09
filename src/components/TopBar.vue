@@ -1,33 +1,37 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { defineProps } from 'vue';
 
-const opacity = ref(0);
+// const opacity = ref(0);
 
-const handleScroll = () => {
-  // 计算透明度，随着滚动增加透明度
-  const scrollTop = window.scrollY;
-  // 当滚动超过100px时，顶栏完全不透明
-  opacity.value = Math.min(scrollTop / 100, 1);
-};
+// const handleScroll = () => {
+//   const scrollTop = window.scrollY;
+//   opacity.value = Math.min(scrollTop / 30, 1);
+// };
 
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
-});
+// onMounted(() => {
+//   window.addEventListener('scroll', handleScroll);
+// });
 
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
-});
+// onUnmounted(() => {
+//   window.removeEventListener('scroll', handleScroll);
+// });
+
+const props = defineProps<{
+  info: string;
+  status: string;
+}>();
 </script>
 
 <template>
-  <div class="top-bar" :style="{ backgroundColor: `rgba(45, 45, 45, ${opacity})` }">
+  <div class="top-bar">
     <div class="user-info">
       <div class="avatar">
         <img src="@/assets/images/avatar.svg" alt="User Avatar" />
       </div>
       <div class="info">
-        <div class="username">Username</div>
-        <div class="status">Online</div>
+        <div class="infomation">{{ props.info }}</div>
+        <div class="status">{{ props.status }}</div>
       </div>
     </div>
     <div class="card-info">
@@ -49,6 +53,7 @@ onUnmounted(() => {
   padding: 0 16px;
   z-index: 50;
   transition: background-color 0.3s ease;
+  background-color: #1e1e1e;
 }
 
 .user-info {
@@ -75,7 +80,7 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-.username {
+.infomation {
   font-weight: bold;
   color: white;
   font-size: 16px;
@@ -86,10 +91,16 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
+.lib-topbar {
+  font-weight: bold;
+  color: white;
+  font-size: 20px;
+}
+
 .card-info {
   background-color: rgba(255, 255, 255, 0.1);
   padding: 6px 12px;
-  border-radius: 16px;
+  border-radius: 5px;
 }
 
 .card-count {

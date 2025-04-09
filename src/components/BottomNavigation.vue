@@ -84,7 +84,7 @@ const setActiveTab = (tab: string) => {
   justify-content: space-around;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .nav-item {
