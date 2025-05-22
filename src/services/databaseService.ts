@@ -1,4 +1,5 @@
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection, type capConnectionOptions } from '@capacitor-community/sqlite';
+import { Capacitor } from '@capacitor/core';
 
 // 定义分组和卡片的类型
 interface Group {
@@ -21,40 +22,67 @@ const databaseService = {
   db: null as SQLiteDBConnection | null, // 数据库连接对象
 
   async init(): Promise<void> {
-    // 初始化数据库
-    const connectionOptions: capConnectionOptions = {
-      database: 'knowledgeCardsDB',
-      version: 1,
-      encrypted: false,
-      mode: 'no-encryption',
-      readonly: false,
-    };
-    const db = await sqlite.createConnection('knowledgeCardsDB', false, 'no-encryption', 1, false);
-    await db.open();
+    try {
+      // 如果数据库已初始化且连接已打开，则不执行任何操作
+      if (this.db && (await this.db.isDBOpen()).result) {
+        console.log('数据库服务已初始化并打开');
+        return;
+      }
 
-    // 确保卡片和分组表的存在
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS groups (
-        group_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        group_name TEXT
-      );
-    `);
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS cards (
-        card_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        group_id INTEGER,
-        question TEXT,
-        answer TEXT,
-        created_at INTEGER,
-        last_reviewed_at INTEGER,
-        FOREIGN KEY(group_id) REFERENCES groups(group_id)
-      );
-    `);
-    await db.execute(`
-      CREATE INDEX IF NOT EXISTS idx_group_id ON cards(group_id);
-    `);
+      console.log('正在初始化数据库服务...');
+      
+      // 检查平台
+      const platform = Capacitor.getPlatform();
+      console.log(`当前平台: ${platform}`);
+      
+      // 只在本地平台上初始化SQLite
+      if (platform === 'web') {
+        console.log('Web平台不支持完整的SQLite功能，跳过初始化');
+        return;
+      }
+      
+      // 非Web平台初始化SQLite
+      console.log('正在设置数据库连接...');
+      
+      // 强制关闭任何可能存在的同名连接，以防万一
+      try {
+        await CapacitorSQLite.closeConnection({ database: 'knowledgeCardsDB' });
+        console.log('强制关闭knowledgeCardsDB的现有连接');
+      } catch (e) {
+        console.log('无需关闭knowledgeCardsDB的现有连接或关闭失败:', e);
+      }
 
-    this.db = db;
+      const db = await sqlite.createConnection('knowledgeCardsDB', false, 'no-encryption', 1, false);
+      await db.open();
+
+      // 确保卡片和分组表的存在
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS groups (
+          group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          group_name TEXT
+        );
+      `);
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS cards (
+          card_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          group_id INTEGER,
+          question TEXT,
+          answer TEXT,
+          created_at INTEGER,
+          last_reviewed_at INTEGER,
+          FOREIGN KEY(group_id) REFERENCES groups(group_id)
+        );
+      `);
+      await db.execute(`
+        CREATE INDEX IF NOT EXISTS idx_group_id ON cards(group_id);
+      `);
+
+      this.db = db;
+      console.log('数据库服务初始化成功.');
+    } catch (error) {
+      console.error('数据库初始化失败:', error);
+      throw error;
+    }
   },
 
   // 保存分组

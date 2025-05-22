@@ -6,18 +6,26 @@ import FilePage from '@/views/FilePage.vue'
 import CardDetailPage from '@/views/CardDetailPage.vue'
 import AddCardGroupPage from '@/views/AddCardGroupPage.vue'
 import LibPage from '@/views/LibPage.vue'
+import TestWebDavPage from '../views/TestWebDavPage.vue'
+
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/home'
+      redirect: '/test-webdav'
     },
     {
       path: '/home',
       name: 'home',
       component: HomePage
+    },
+    {
+      path: '/test-webdav',
+      name: 'TestWebDav',
+      component: TestWebDavPage
     },
     {
       path: '/lib',
