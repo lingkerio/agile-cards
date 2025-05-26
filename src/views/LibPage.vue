@@ -22,6 +22,11 @@ onMounted(() => {
   }
 })
 
+const handleWebDAVSync = () => {
+  console.log('点击了 WebDAV 同步按钮（预留）');
+};
+
+
 const clearSearch = () => {
   searchQuery.value = '';
 }
@@ -107,6 +112,14 @@ const setActiveFilter = (filter: string) => {
     </div>
     
   </div>
+
+
+<!-- ✅ 固定底部同步按钮 -->
+<div class="webdav-fixed-button">
+  <button @click="handleWebDAVSync">WebDAV 同步（预留）</button>
+</div>
+
+  
 </template>
 
 <style scoped>
@@ -313,4 +326,49 @@ const setActiveFilter = (filter: string) => {
   margin: 0;
   opacity: 0.9;
 }
+
+.setting-section {
+  margin-top: 30px;
+  padding: 0 10px;
+}
+
+.setting-section h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.setting-section input {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px;
+  background-color: #2a2a2a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+.webdav-fixed-button {
+  position: fixed;
+  bottom: 80px; /* 保证不遮住底部导航栏 */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+}
+
+.webdav-fixed-button button {
+  background-color: #42b983;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease;
+}
+
+.webdav-fixed-button button:hover {
+  background-color: #36986f;
+}
+
 </style>

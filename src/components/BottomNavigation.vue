@@ -30,6 +30,7 @@ const setActiveTab = (tab: string) => {
       </div>
       <span>Home</span>
     </div>
+
     <div 
       class="nav-item" 
       :class="{ active: activeTab === 'lib' }" 
@@ -39,6 +40,28 @@ const setActiveTab = (tab: string) => {
         <img src="@/assets/icons/lib.svg" alt="Lib" />
       </div>
       <span>Lib</span>
+    </div>
+
+    <div 
+      class="nav-item" 
+      :class="{ active: activeTab === 'class' }" 
+      @click="setActiveTab('class')"
+    >
+      <div class="icon">
+        <img src="@/assets/icons/class.svg" alt="Class" />
+      </div>
+      <span>复习</span>
+    </div>
+
+    <div 
+      class="nav-item" 
+      :class="{ active: activeTab === 'settings' }" 
+      @click="setActiveTab('settings')"
+    >
+      <div class="icon">
+        <img src="@/assets/icons/file.svg" alt="Settings" />
+      </div>
+      <span>设置</span>
     </div>
     <!-- <div 
       class="nav-item" 

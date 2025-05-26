@@ -54,7 +54,13 @@ const router = createRouter({
       path: '/home/add-card-group',
       name: 'add-card-group',
       component: AddCardGroupPage
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: FilePage   // 仍然复用 FilePage.vue
     }
+
   ]
 })
 

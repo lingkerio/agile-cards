@@ -3,11 +3,23 @@
     <div
       v-for="(item, index) in items"
       :key="index"
-      class="list-item"
-      @click="getItemPosition(index)"
+      class="card-wrapper"
+      :class="{ flipped: flippedIndex === index }"
+      @click="flipCard(index)"
     >
-      <img :src="item.image" alt="Item Image" class="item-image" />
-      <div class="item-text">{{ item.text }}</div>
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-face card-front">
+          <img :src="item.image" alt="img" class="card-image" />
+          <div class="card-text">{{ item.front }}</div>
+        </div>
+
+        <!-- 背面 -->
+        <div class="card-face card-back">
+          <img :src="item.image" alt="img" class="card-image" />
+          <div class="card-text">{{ item.back }}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -16,32 +28,38 @@
 export default {
   data() {
     return {
+      flippedIndex: null,
       items: [
-        { image: "https://picsum.photos/200/300", text: "Item 1" },
-        { image: "https://picsum.photos/200/300", text: "Item 2" },
-        { image: "https://picsum.photos/200/300", text: "Item 3" },
-        { image: "https://picsum.photos/200/300", text: "Item 4" },
+        {
+          front: 'apple',
+          back: '苹果，一种常见的水果',
+          image: 'https://picsum.photos/id/1011/200/120',
+        },
+        {
+          front: 'banana',
+          back: '香蕉，黄色弯弯的水果',
+          image: 'https://picsum.photos/id/1015/200/120',
+        },
+        {
+          front: 'cat',
+          back: '猫，一种常见的宠物动物',
+          image: 'https://picsum.photos/id/1025/200/120',
+        },
+        {
+          front: 'dog',
+          back: '狗，人类忠实的朋友',
+          image: 'https://picsum.photos/id/1024/200/120',
+        },
       ],
     };
   },
   methods: {
-    getItemPosition(index) {
-      console.log(index)
-      // 获取点击的元素
-      const itemElement = this.$el.querySelectorAll(".list-item")[index];
-      
-      // 获取元素的位置信息
-      const rect = itemElement.getBoundingClientRect();
+    flipCard(index) {
+      this.flippedIndex = this.flippedIndex === index ? null : index;
 
-      // 打印位置信息
-      console.log("Item Position:", {
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-        right: rect.right,
-        bottom: rect.bottom,
-      });
+      const itemElement = this.$el.querySelectorAll(".card-wrapper")[index];
+      const rect = itemElement.getBoundingClientRect();
+      console.log("Item Position:", rect);
     },
   },
 };
@@ -51,34 +69,62 @@ export default {
 .horizontal-list {
   display: flex;
   overflow-x: auto;
-  white-space: nowrap;
-  padding: 10px;
-  gap: 10px;
+  padding: 20px;
+  gap: 20px;
+  scroll-snap-type: x mandatory;
 }
 
-.list-item {
-  position: relative;
+.card-wrapper {
   flex: 0 0 auto;
-  width: 150px;
-  height: 200px;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.3s ease;
+  width: 200px;
+  height: 260px;
+  perspective: 1000px;
+  scroll-snap-align: center;
 }
 
-.list-item img {
+.card-inner {
   width: 100%;
   height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+}
+
+.card-wrapper.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background-color: #2d2d2d;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  backface-visibility: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
+
+.card-image {
+  width: 100%;
+  height: 120px;
   object-fit: cover;
 }
 
-.list-item .item-text {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  color: white;
+.card-text {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  text-align: center;
 }
 </style>
