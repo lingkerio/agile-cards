@@ -28,7 +28,7 @@ const setActiveTab = (tab: string) => {
       <div class="icon">
         <img src="@/assets/icons/home.svg" alt="Home" />
       </div>
-      <span>Home</span>
+      <span>主页</span>
     </div>
 
     <div 
@@ -39,16 +39,16 @@ const setActiveTab = (tab: string) => {
       <div class="icon">
         <img src="@/assets/icons/lib.svg" alt="Lib" />
       </div>
-      <span>Lib</span>
+      <span>卡片</span>
     </div>
 
     <div 
       class="nav-item" 
-      :class="{ active: activeTab === 'class' }" 
-      @click="setActiveTab('class')"
+      :class="{ active: activeTab === 'review' }" 
+      @click="setActiveTab('review')"
     >
       <div class="icon">
-        <img src="@/assets/icons/class.svg" alt="Class" />
+        <img src="@/assets/icons/review.svg" alt="Review" />
       </div>
       <span>复习</span>
     </div>
@@ -59,49 +59,20 @@ const setActiveTab = (tab: string) => {
       @click="setActiveTab('settings')"
     >
       <div class="icon">
-        <img src="@/assets/icons/file.svg" alt="Settings" />
+        <img src="@/assets/icons/settings.svg" alt="Settings" />
       </div>
       <span>设置</span>
     </div>
-    <!-- <div 
-      class="nav-item" 
-      :class="{ active: activeTab === 'class' }" 
-      @click="setActiveTab('class')"
-    >
-      <div class="icon">
-        <img src="@/assets/icons/class.svg" alt="Class" />
-      </div>
-      <span>Class</span>
-    </div>
-    <div 
-      class="nav-item" 
-      :class="{ active: activeTab === 'chat' }" 
-      @click="setActiveTab('chat')"
-    >
-      <div class="icon">
-        <img src="@/assets/icons/chat.svg" alt="Chat" />
-      </div>
-      <span>Chat</span>
-    </div>
-    <div 
-      class="nav-item" 
-      :class="{ active: activeTab === 'file' }" 
-      @click="setActiveTab('file')"
-    >
-      <div class="icon">
-        <img src="@/assets/icons/file.svg" alt="File" />
-      </div>
-      <span>File</span>
-    </div> -->
   </nav>
 </template>
 
 <style scoped>
 .bottom-navigation {
   position: fixed;
-  bottom: -1px;
-  width: 101%;
-  height: 70px;
+  left: -1vw;
+  bottom: -1vw;
+  width: 102vw;
+  height: 11vh;
   background-color: #2d2d2d;
   display: flex;
   justify-content: space-around;
@@ -128,8 +99,8 @@ const setActiveTab = (tab: string) => {
 }
 
 .icon {
-  width: 24px;
-  height: 24px;
+  width: 3vh;
+  height: 3vh;
   margin-bottom: 4px;
 }
 

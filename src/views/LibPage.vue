@@ -4,7 +4,7 @@ import { useCardsStore } from '@/stores/cards'
 import { useCardGroupsStore } from '@/stores/cardGroups'
 import TopBar from '@/components/TopBar.vue'
 import webdavService from '@/services/webDavService'
-import databaseService from '@/services/databaseService'
+import databaseService from '@/services/__databaseService'
 
 const props = defineProps<{
   filter?: string

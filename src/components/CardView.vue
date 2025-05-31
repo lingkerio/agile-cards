@@ -34,7 +34,7 @@ const handleClick = () => {
 <style scoped>
 .card-view {
   position: relative;
-  height: 400px;
+  height: 65vh;
   border-radius: 5px;
   overflow: hidden;
   margin: 0;

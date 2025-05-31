@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { CapacitorSQLite } from '@capacitor-community/sqlite';
-import databaseService from '../services/databaseService';
+import databaseService from '../services/__databaseService';
 import webdavService from '../services/webDavService';
 import TopBar from '../components/TopBar.vue';
 import { Capacitor } from '@capacitor/core';

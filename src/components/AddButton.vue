@@ -17,8 +17,8 @@ const handleClick = () => {
 <style scoped>
 .add-button {
   position: fixed;
-  bottom: 110px;
-  right: 25px;
+  bottom: 13vh;
+  right: 5vw;
   width: 70px;
   height: 70px;
   border-radius: 50%;

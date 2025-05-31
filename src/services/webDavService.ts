@@ -43,7 +43,7 @@
 
 import { CONFIG } from '../config/config'
 import { CapacitorSQLite, SQLiteConnection } from '@capacitor-community/sqlite'
-import databaseService from './databaseService' // 导入数据库服务
+import databaseService from './__databaseService' // 导入数据库服务
 import { Capacitor } from '@capacitor/core'
 
 const sqlite = new SQLiteConnection(CapacitorSQLite);

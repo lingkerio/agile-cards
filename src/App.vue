@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import BottomNavigation from './components/BottomNavigation.vue';
+
+// 为 sql.js (通过 jeep-sqlite) 进行配置
+const sqlJsConfig = {
+  // 这个函数告诉 sql.js 在哪里找到它的 .wasm 文件
+  // 假设 sql-wasm.wasm 位于 public/assets/ 目录下
+  locateFile: (filename: string) => `/assets/${filename}`,
+};
 </script>
 
 <template>
   <div class="app">
-    <!-- <transition name="fade" mode="out-in">
-      <router-view />
-    </transition> -->
+    <jeep-sqlite :sqlJsConfig="sqlJsConfig"></jeep-sqlite>
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
         <component :is="Component" />

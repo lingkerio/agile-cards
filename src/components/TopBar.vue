@@ -46,11 +46,11 @@ const props = defineProps<{
   top: 0;
   left: 0;
   right: 0;
-  height: 70px;
+  height: 10vh;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 5vw;
   z-index: 50;
   transition: background-color 0.3s ease;
   background-color: #1e1e1e;
@@ -62,8 +62,8 @@ const props = defineProps<{
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 5vh;
+  height: 5vh;
   border-radius: 50%;
   overflow: hidden;
   margin-right: 12px;
@@ -76,6 +76,7 @@ const props = defineProps<{
 }
 
 .info {
+  padding-left: 1vw;
   display: flex;
   flex-direction: column;
 }

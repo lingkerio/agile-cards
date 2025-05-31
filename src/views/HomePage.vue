@@ -36,7 +36,7 @@ onMounted(() => {
     <TopBar :info="'Username'" :status="'Online'" />
 
     <div class="card-list">
-      <h1>Card List</h1>
+      <div class="title">卡片组列表</div>
 
       <div class="card-switch-container" v-if="cardGroups.length">
         <button class="arrow left" @click="prevCard" :disabled="currentIndex === 0">‹</button>
@@ -78,7 +78,16 @@ onMounted(() => {
 }
 
 .card-list {
-  padding: 80px 0 0;
+  padding: 10vh 0 0;
+}
+
+.title {
+  height: 8vh;
+  margin-bottom: 0;
+  font-size: 2rem; 
+  font-weight: 500;    
+  padding-left: 5vw;  
+  text-align: left;    
 }
 
 .card-list h1 {
@@ -90,7 +99,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 10px 0;
+  padding: 0 0;
 }
 
 .arrow {
@@ -110,7 +119,8 @@ onMounted(() => {
 
 .card-wrapper {
   width: 85vw;
-  max-width: 500px;
+  height: 65vh;
+  /* max-width: 500px; */
   transition: all 0.3s ease;
 }
 
@@ -125,9 +135,10 @@ onMounted(() => {
 
 .pagination-dots {
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-top: 16px;
   gap: 6px;
+  height: 7vh;
 }
 
 .dot {
@@ -139,7 +150,7 @@ onMounted(() => {
 }
 
 .dot.active {
-  background-color: #42b983;
+  background-color: #107c10;
 }
 
 /* 过渡动画 */

@@ -10,7 +10,14 @@ import MotionResolver from 'motion-v/resolver'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          // 这里声明 jeep-sqlite 是自定义元素
+          isCustomElement: (tag) => tag === 'jeep-sqlite'
+        }
+      }
+    }),
     vueJsx(),
     // vueDevTools(),
     Components({
@@ -24,5 +31,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
-  },
+  }
 })
+
+

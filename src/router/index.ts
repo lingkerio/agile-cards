@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/views/HomePage.vue'
-import ClassPage from '@/views/ClassPage.vue'
-import ChatPage from '@/views/ChatPage.vue'
-import FilePage from '@/views/FilePage.vue'
+import SettingsPage from '@/views/SettingsPage.vue'
 import CardDetailPage from '@/views/CardDetailPage.vue'
 import AddCardGroupPage from '@/views/AddCardGroupPage.vue'
 import LibPage from '@/views/LibPage.vue'
+import TestSQLitePage from '@/views/TestSQLitePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,19 +30,14 @@ const router = createRouter({
       props: true
     },
     {
-      path: '/class',
-      name: 'class',
-      component: ClassPage
+      path: '/review',
+      name: 'review',
+      component: TestSQLitePage,
     },
     {
-      path: '/chat',
-      name: 'chat',
-      component: ChatPage
-    },
-    {
-      path: '/file',
-      name: 'file',
-      component: FilePage
+      path: '/settings',
+      name: 'settings',
+      component: SettingsPage
     },
     {
       path: '/card/:id',
@@ -54,13 +48,7 @@ const router = createRouter({
       path: '/home/add-card-group',
       name: 'add-card-group',
       component: AddCardGroupPage
-    },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: FilePage   // 仍然复用 FilePage.vue
     }
-
   ]
 })
 

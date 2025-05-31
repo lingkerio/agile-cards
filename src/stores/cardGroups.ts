@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import placeholderImage from '@/assets/images/placeholder.svg'
+import placeholderImage from '@/assets/images/placeholder.jpg'
 
 export const useCardGroupsStore = defineStore('cardGroups', () => {
   const cardGroups = ref([
