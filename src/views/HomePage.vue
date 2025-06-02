@@ -113,6 +113,8 @@ onMounted(() => {
 .home-page {
   min-height: 100vh;
   color: white;
+  padding-bottom: 75px;
+  overflow: hidden;
 }
 
 .card-list {

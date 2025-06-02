@@ -47,15 +47,6 @@ const handleSubmit = async () => {
         rows="12"
       ></textarea>
 
-      <!-- <div class="file-upload">
-        <input type="file" accept="image/*" @change="handleFileChange" />
-        <span v-if="!image">未选择图片</span>
-      </div>
-
-      <div v-if="image" class="preview">
-        <img :src="image" alt="封面预览" />
-      </div> -->
-
       <button @click="handleSubmit" class="submit-btn">创建卡片组</button>
     </div>
   </div>

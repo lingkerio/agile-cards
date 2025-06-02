@@ -72,9 +72,9 @@ const setActiveTab = (tab: string) => {
 .bottom-navigation {
   position: fixed;
   left: -1vw;
-  bottom: -1vh;
+  bottom: -5px;
   width: 102vw;
-  height: 9vh;
+  height: 80px;
   background-color: #2d2d2d;
   display: flex;
   justify-content: space-around;

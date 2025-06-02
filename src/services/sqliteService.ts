@@ -7,12 +7,12 @@ export interface Group {
 }
 
 export interface Cards {
-  card_id?:    number;
-  card_hash:   string;
-  group_id:    number;
-  question:    string;
-  answer?:     string;
-  reviewed_at: number;
+  card_id?:     number;
+  card_hash?:   string;
+  group_id:     number;
+  question:     string;
+  answer?:      string;
+  reviewed_at?: number;
 }
 
 export class SqliteService {
