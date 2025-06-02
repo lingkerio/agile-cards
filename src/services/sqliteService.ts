@@ -130,6 +130,16 @@ export class SqliteService {
     return result.values as Group[];
   }
 
+  // Get cards by id
+  async getCardsByID(id: number): Promise<Cards[]> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`
+      SELECT * FROM \`Cards\` WHERE card_id = ?;
+    `, [id]);
+    return result.values as Cards[];
+  }
+
   // Get group number
   async getGroupNum(): Promise<number> {
     if (!this.db) await this.initDB();

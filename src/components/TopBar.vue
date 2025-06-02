@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { defineProps } from 'vue';
 
 // const opacity = ref(0);
 

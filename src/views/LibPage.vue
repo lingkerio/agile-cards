@@ -4,9 +4,10 @@ import { useCardsStore } from '@/stores/cards'
 import { useCardGroupsStore } from '@/stores/cardGroups'
 import TopBar from '@/components/TopBar.vue'
 import webdavService from '@/services/webDavService'
-import databaseService from '@/services/__databaseService'
+import databaseService from '@/services/__databaseService.ts'
 import { SqliteService } from '@/services/sqliteService'
 import { useAppInitStore } from '@/stores/appInitStore'
+import router from '@/router'
 
 const sqlite = new SqliteService();
 
@@ -41,11 +42,10 @@ async function loadCards() {
 }
 
 const searchQuery = ref('')
-const activeFilter = ref('all')
 
 onMounted(() => {
   if (props.filter) {
-    activeFilter.value = props.filter
+    searchQuery.value = props.filter
   }
   watchEffect(async () => {
     if (appInit.isDbInitialized) {
@@ -147,32 +147,22 @@ const clearSearch = () => {
   searchQuery.value = '';
 }
 
-// const filteredCards = computed(() => {
-//   let filtered = cards  // 直接使用 cards，解构时已经获取了 value
+const filteredCards = computed(() => {
+  let filtered = cards.value  // 直接使用 cards，解构时已经获取了 value
 
-//   // First apply group filter
-//   if (activeFilter.value !== 'all') {
-//     const group = cardGroups.find(g => g.title === activeFilter.value)
-//     if (group) {
-//       filtered = filtered.filter(card => group.content.includes(card.id))
-//     }
-//   }
+  // Then apply search query
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(card =>
+      card.question.toLowerCase().includes(query) ||
+      card.answer.toLowerCase().includes(query) ||
+      card.group_name.toLowerCase().includes(query)
+    )
+  }
 
-//   // Then apply search query
-//   if (searchQuery.value) {
-//     const query = searchQuery.value.toLowerCase()
-//     filtered = filtered.filter(card =>
-//       card.question.toLowerCase().includes(query) ||
-//       card.answer.toLowerCase().includes(query)
-//     )
-//   }
+  return filtered
+})
 
-//   return filtered
-// })
-
-const setActiveFilter = (filter: string) => {
-  activeFilter.value = filter
-}
 </script>
 
 <template>
@@ -188,22 +178,24 @@ const setActiveFilter = (filter: string) => {
             </button>
           </div>
         </div>
-        <!-- <div class="filter-tabs">
-          <button class="filter-tab" :class="{ active: activeFilter === 'all' }" @click="setActiveFilter('all')">
-            All
-          </button>
-          <button v-for="group in cardGroups" :key="group.id" class="filter-tab"
-            :class="{ active: activeFilter === group.title }" @click="setActiveFilter(group.title)">
-            {{ group.title }}
-          </button>
-        </div> -->
       </div>
     </div>
 
     <div class="cards-grid">
-      <div v-for="card in cards" :key="card.id" class="card">
-        <h3>{{ card.question }}</h3>
-        <p>{{ card.answer }}</p>
+      <div 
+        v-for="card in filteredCards" 
+        :key="card.id" 
+        class="card"
+      >
+        <div class="card-container" @click="router.push(`/lib/cards/${card.id}`)">
+          <h3 class="truncate-h3">{{ card.question }}</h3>
+          <p class="truncate-p">{{ card.answer }}</p>
+          <div class="card-group-wrapper">
+            <div class="card-group">
+              {{ card.group_name }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -235,11 +227,52 @@ const setActiveFilter = (filter: string) => {
 </template>
 
 <style scoped>
+.card-container {
+  position: relative;
+}
+
+.truncate-h3 {
+  white-space: nowrap;
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+
+.truncate-p {
+  white-space: nowrap;
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+
+.card-group-wrapper {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+}
+
+.card-group-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 100%;
+  width: 30px;
+  background: linear-gradient(
+    to right, rgb(53, 53, 53, 0), rgb(53, 53, 53, 1)
+  );
+  pointer-events: none; 
+}
+
+.card-group {
+  background-color: #da3b01;
+  padding: 6px;
+  border-radius: 10px;
+}
+
 .lib-page {
   /* padding: 20px; */
   background-color: #1e1e1e;
-  min-height: 100vh;
-  padding-bottom: 8vh;
+  /* min-height: 100vh; */
+  padding-bottom: 95px;
   /* 为底部导航留出空间 */
 }
 
@@ -270,8 +303,8 @@ const setActiveFilter = (filter: string) => {
   padding-right: 40px;
   padding: 12px 20px;
   /* margin: 8px 0; */
-  border: 2px solid #333;
-  border-radius: 5px;
+  border: 1px solid #333;
+  border-radius: 10px;
   font-size: 16px;
   outline: none;
   transition: border-color 0.15s;
@@ -284,7 +317,7 @@ const setActiveFilter = (filter: string) => {
 }
 
 .search-input:focus {
-  border-color: #107c10;
+  border: 1px solid #107c10;
 }
 
 .clear-button {
@@ -411,7 +444,7 @@ const setActiveFilter = (filter: string) => {
 .card {
   padding: 20px;
   background-color: #353535;
-  border-radius: 5px;
+  border-radius: 10px;
   color: white;
   cursor: pointer;
   transition: transform 0.15s ease;
@@ -426,32 +459,12 @@ const setActiveFilter = (filter: string) => {
 .card h3 {
   margin-top: 0;
   margin-bottom: 15px;
+  font-weight: bold;
 }
 
 .card p {
   margin: 0;
-  opacity: 0.9;
-}
-
-.setting-section {
-  margin-top: 30px;
-  padding: 0 10px;
-}
-
-.setting-section h3 {
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-.setting-section input {
-  display: block;
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 10px;
-  background-color: #2a2a2a;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  opacity: 0.8;
 }
 
 /* 修改WebDAV同步按钮样式 */

@@ -1,62 +1,147 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { SqliteService } from '@/services/sqliteService';
+import type { Group, Cards } from '@/services/sqliteService';
 
-const route = useRoute();
-const cardId = ref(route.params.id);
-const isVisible = ref(false);
+const question = ref<string>("");
+const answer = ref<string>("");
 
-onMounted(() => {
-  // 添加一个小延迟以确保过渡效果正常显示
-  setTimeout(() => {
-    isVisible.value = true;
-  }, 100);
-});
+const sqlite = new SqliteService();
+
+const props = defineProps<{
+  card_id: string
+}>()
+
+onMounted(async () => {
+  console.log(props.card_id);
+  const card: Cards = (await sqlite.getCardsByID(Number(props.card_id)))?.[0];
+  question.value = card.question;
+  answer.value = card.answer ?? "";
+})
 </script>
 
 <template>
-  <div class="card-detail-container">
-    <transition name="card-expand" appear>
-      <div v-if="isVisible" class="card-detail-page">
-        <h1>卡片详情页面</h1>
-        <p>卡片 ID: {{ cardId }}</p>
-        <div class="card-content">
-          <p>此页面待实现</p>
-        </div>
+  <div class="card-page">
+    <div class="form-container">
+      <h1>卡片内容</h1>
+
+      <div class="input">
+        <p class="title">问题</p>
+        <p class="content">{{ question }}</p>
       </div>
-    </transition>
+
+      <div class="textarea">
+        <p class="title">答案</p>
+        <p class="content">{{ answer }}</p>
+      </div>
+
+    </div>
   </div>
 </template>
 
 <style scoped>
-.card-detail-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 0;
-}
-
-.card-detail-page {
-  width: 100%;
-  height: 100%;
+.card-page {
+  min-height: 100vh;
   background-color: #1e1e1e;
   color: white;
   display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  padding-bottom: 95px;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  position: relative;
+  gap: 20px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.input {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  background-color: #222222;
+  color: white;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
+  transition: border 0.15s;
+}
+
+.textarea {
+  width: 100%;
+  resize: none;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  background-color: #222222;
+  color: white;
+  transition: border 0.15s;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
   overflow: hidden;
 }
 
-.card-content {
-  margin-top: 20px;
+.title {
+  font-size: large;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.content {
+  opacity: 0.6;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border: 1px solid #107c10;
+}
+
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #aaa;
+}
+
+.preview {
+  text-align: center;
+}
+
+.preview img {
   width: 100%;
-  max-width: 600px;
+  max-width: 300px;
+  border-radius: 12px;
+  border: 1px solid #444;
+  margin-top: 10px;
+}
+
+.submit-btn {
+  background-color: #107c10;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.15s ease;
+  width: 100%;
+}
+
+.submit-btn:hover {
+  background-color: #0e6a0e;
 }
 </style>

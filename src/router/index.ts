@@ -42,11 +42,6 @@ const router = createRouter({
       component: SettingsPage
     },
     {
-      path: '/card/:id',
-      name: 'card-detail',
-      component: CardDetailPage
-    },
-    {
       path: '/home/add-choose',
       name: 'add-choose',
       component: AddChoosePage
@@ -60,6 +55,12 @@ const router = createRouter({
       path: '/home/add-cards',
       name: 'add-cards',
       component: AddCardsPage
+    },
+    {
+      path: '/lib/cards/:card_id',
+      name: 'cards',
+      component: CardDetailPage,
+      props: true
     }
   ]
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { SqliteService } from '@/services/databaseService' // 确保路径正确
 
-import { KnowledgeCard, KnowledgeCardGroup, ReviewScore } from '@/services/interfaces/database' // 导入接口
+import type { KnowledgeCard, KnowledgeCardGroup, ReviewScore } from '@/services/interfaces/database' // 导入接口
 
 import { ref, onMounted, onUnmounted } from 'vue'
 
