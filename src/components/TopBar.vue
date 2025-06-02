@@ -52,7 +52,7 @@ const props = defineProps<{
   align-items: center;
   padding: 0 5vw;
   z-index: 50;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.15s ease;
   background-color: #1e1e1e;
 }
 

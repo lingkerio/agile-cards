@@ -243,7 +243,7 @@ const logout = () => {
 
 .clickable {
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .clickable:hover {

@@ -34,13 +34,13 @@ const handleClick = () => {
 <style scoped>
 .card-view {
   position: relative;
-  height: 65vh;
+  height: 70vh;
   border-radius: 5px;
   overflow: hidden;
   margin: 0;
   margin-bottom: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
-  transition: all 0.3s ease;
+  transition: all 0.15s ease;
   cursor: pointer;
   background-color: green;
 }
@@ -48,7 +48,7 @@ const handleClick = () => {
 .card-image {
   width: 100%;
   height: 100%;
-  transition: height 0.3s ease;
+  transition: height 0.15s ease;
 }
 
 .card-image img {
@@ -64,7 +64,7 @@ const handleClick = () => {
   padding: 16px;
   /* background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent); */
   width: 100%;
-  transition: all 0.3s ease;
+  transition: all 0.15s ease;
 }
 
 .card-content h2 {

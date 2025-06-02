@@ -30,7 +30,7 @@ const handleClick = () => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   z-index: 90;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 .add-button:hover {

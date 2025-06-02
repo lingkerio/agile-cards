@@ -25,7 +25,7 @@ export const useCardsStore = defineStore('cards', () => {
     },
     {
       id: 5,
-      question: 'What are Vue Components?',
+      question: 'What are Vue Components? super long long long long long long long long long long long long long long',
       answer: 'Components are reusable Vue instances with a name that encapsulate code, template, and styles.'
     },
     {

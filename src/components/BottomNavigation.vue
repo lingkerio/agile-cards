@@ -20,6 +20,7 @@ const setActiveTab = (tab: string) => {
 
 <template>
   <nav class="bottom-navigation">
+    <div class="nav-padding"></div>
     <div 
       class="nav-item" 
       :class="{ active: activeTab === 'home' }" 
@@ -63,6 +64,7 @@ const setActiveTab = (tab: string) => {
       </div>
       <span>设置</span>
     </div>
+    <div class="nav-padding"></div>
   </nav>
 </template>
 
@@ -70,15 +72,20 @@ const setActiveTab = (tab: string) => {
 .bottom-navigation {
   position: fixed;
   left: -1vw;
-  bottom: -1vw;
+  bottom: -1vh;
   width: 102vw;
-  height: 11vh;
+  height: 9vh;
   background-color: #2d2d2d;
   display: flex;
   justify-content: space-around;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
   z-index: 9999;
+}
+
+.nav-padding {
+  height: 9vh;
+  width: 3vw;
 }
 
 .nav-item {
@@ -90,7 +97,7 @@ const setActiveTab = (tab: string) => {
   flex: 1;
   height: 100%;
   color: #999;
-  transition: color 0.3s ease;
+  transition: color 0.15s ease;
   cursor: pointer;
 }
 
@@ -99,9 +106,10 @@ const setActiveTab = (tab: string) => {
 }
 
 .icon {
-  width: 3vh;
-  height: 3vh;
-  margin-bottom: 4px;
+  width: 2.5vh;
+  height: 2.5vh;
+  margin-top: -1vh;
+  margin-bottom: 3px;
 }
 
 .icon img {

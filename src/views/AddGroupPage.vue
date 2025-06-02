@@ -1,44 +1,35 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useCardGroupsStore } from '@/stores/cardGroups';
+import { SqliteService } from '@/services/sqliteService';
+import type { Group } from '@/services/sqliteService';
 
 const title = ref('');
 const description = ref('');
-const image = ref('');
 
 const router = useRouter();
-const store = useCardGroupsStore();
+const sqlite = new SqliteService();
 
-const handleFileChange = (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (file) {
-    image.value = URL.createObjectURL(file);
-  }
-};
-
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!title.value.trim()) {
-    alert('卡片组名称不能为空');
+    alert('卡片组名称不能为空！');
     return;
   }
 
-  const newGroup = {
-    title: title.value,
-    description: description.value,
-    image: image.value || 'https://via.placeholder.com/200x120',
+  const group: Group = {
+    group_name: title.value,
+    group_dis: description.value
   };
 
-  //store.addGroup(newGroup);
-  alert('卡片组已创建！');
-
-  // 清空表单
-  title.value = '';
-  description.value = '';
-  image.value = '';
-
-  // 跳转到卡片组列表页
-  router.push('/lib');
+  const result = await sqlite.saveGroup(group);
+  if (result.changes == 0) {
+    alert('无法插入卡片组，可能由于卡片组重名，或卡片组超过 16 个。');
+  } else {
+    alert('卡片组已创建！');
+    title.value = '';
+    description.value = '';
+    router.push('/home');
+  }
 };
 </script>
 
@@ -53,17 +44,17 @@ const handleSubmit = () => {
         v-model="description"
         placeholder="请输入描述（可选）"
         class="textarea"
-        rows="4"
-      />
+        rows="12"
+      ></textarea>
 
-      <div class="file-upload">
+      <!-- <div class="file-upload">
         <input type="file" accept="image/*" @change="handleFileChange" />
         <span v-if="!image">未选择图片</span>
       </div>
 
       <div v-if="image" class="preview">
         <img :src="image" alt="封面预览" />
-      </div>
+      </div> -->
 
       <button @click="handleSubmit" class="submit-btn">创建卡片组</button>
     </div>
@@ -97,22 +88,34 @@ h1 {
   text-align: center;
 }
 
-.input,
-.textarea {
+.input {
   width: 100%;
   padding: 14px;
   font-size: 16px;
   border-radius: 10px;
-  border: none;
+  border: 1px solid #2a2a2a;
   background-color: #2a2a2a;
   color: white;
-  transition: border 0.3s;
+  transition: border 0.15s;
+}
+
+.textarea {
+  width: 100%;
+  resize: none;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  background-color: #2a2a2a;
+  color: white;
+  transition: border 0.15s;
+  overflow: hidden;
 }
 
 .input:focus,
 .textarea:focus {
   outline: none;
-  border: 1px solid #42b983;
+  border: 1px solid #107c10;
 }
 
 .file-upload {
@@ -135,7 +138,7 @@ h1 {
 }
 
 .submit-btn {
-  background-color: #42b983;
+  background-color: #107c10;
   padding: 14px;
   border: none;
   border-radius: 12px;
@@ -143,11 +146,11 @@ h1 {
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: 0.15s ease;
   width: 100%;
 }
 
 .submit-btn:hover {
-  background-color: #36986f;
+  background-color: #0e6a0e;
 }
 </style>

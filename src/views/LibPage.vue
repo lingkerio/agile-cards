@@ -1,19 +1,44 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watchEffect } from 'vue'
 import { useCardsStore } from '@/stores/cards'
 import { useCardGroupsStore } from '@/stores/cardGroups'
 import TopBar from '@/components/TopBar.vue'
 import webdavService from '@/services/webDavService'
 import databaseService from '@/services/__databaseService'
+import { SqliteService } from '@/services/sqliteService'
+import { useAppInitStore } from '@/stores/appInitStore'
+
+const sqlite = new SqliteService();
 
 const props = defineProps<{
   filter?: string
 }>()
 
-const cardsStore = useCardsStore()
-const cardGroupsStore = useCardGroupsStore()
-const { cards } = cardsStore
-const { cardGroups } = cardGroupsStore
+interface Cards {
+  id:         number;
+  group_id:   number;
+  group_name: string;
+  question:   string;
+  answer:     string;
+};
+
+const appInit = useAppInitStore();
+const cards = ref<Cards[]>([]);
+
+async function loadCards() {
+  try {
+    const cardsqlite = await sqlite.getCards();
+    cards.value = await Promise.all(cardsqlite.map(async card => ({
+      id: card.card_id ?? 0,
+      group_id: card.group_id,
+      group_name: (await sqlite.getGroupByID(card.group_id))?.[0]?.group_name,
+      question: card.question,
+      answer: card.answer ?? ""
+    })));
+  } catch (error: any) {
+    console.error('Failed to load card cards: ', error);
+  }
+}
 
 const searchQuery = ref('')
 const activeFilter = ref('all')
@@ -22,6 +47,16 @@ onMounted(() => {
   if (props.filter) {
     activeFilter.value = props.filter
   }
+  watchEffect(async () => {
+    if (appInit.isDbInitialized) {
+      console.log('DB is initialized, proceeding to load card groups.');
+      await loadCards();
+    } else if (appInit.dbInitializationError) {
+      console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
+    } else {
+      console.log('DB not yet initialized, watchEffect is waiting...');
+    }
+  });
 })
 
 const handleWebDAVSync = () => {
@@ -41,18 +76,18 @@ const uploadDatabase = async () => {
     isUploading.value = true;
     syncMessage.value = '正在上传数据库...';
     showSyncMessage.value = true;
-    
+
     // 确保数据库连接已关闭
     if (databaseService.db) {
       await databaseService.db.close();
       databaseService.db = null;
     }
-    
+
     await webdavService.uploadDatabaseToWebDAV('knowledgeCardsDB', '/backup/database.json');
-    
+
     // 重新初始化数据库连接
     await databaseService.init();
-    
+
     syncMessage.value = '数据库上传成功！';
     setTimeout(() => {
       showSyncMessage.value = false;
@@ -75,18 +110,18 @@ const downloadDatabase = async () => {
     isDownloading.value = true;
     syncMessage.value = '正在下载数据库...';
     showSyncMessage.value = true;
-    
+
     // 确保数据库连接已关闭
     if (databaseService.db) {
       await databaseService.db.close();
       databaseService.db = null;
     }
-    
+
     await webdavService.downloadDatabaseFromWebDAV('/backup/database.json', 'knowledgeCardsDB');
-    
+
     // 重新初始化数据库连接
     await databaseService.init();
-    
+
     syncMessage.value = '数据库下载成功！';
     setTimeout(() => {
       showSyncMessage.value = false;
@@ -112,28 +147,28 @@ const clearSearch = () => {
   searchQuery.value = '';
 }
 
-const filteredCards = computed(() => {
-  let filtered = cards  // 直接使用 cards，解构时已经获取了 value
+// const filteredCards = computed(() => {
+//   let filtered = cards  // 直接使用 cards，解构时已经获取了 value
 
-  // First apply group filter
-  if (activeFilter.value !== 'all') {
-    const group = cardGroups.find(g => g.title === activeFilter.value)
-    if (group) {
-      filtered = filtered.filter(card => group.content.includes(card.id))
-    }
-  }
+//   // First apply group filter
+//   if (activeFilter.value !== 'all') {
+//     const group = cardGroups.find(g => g.title === activeFilter.value)
+//     if (group) {
+//       filtered = filtered.filter(card => group.content.includes(card.id))
+//     }
+//   }
 
-  // Then apply search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(card => 
-      card.question.toLowerCase().includes(query) || 
-      card.answer.toLowerCase().includes(query)
-    )
-  }
+//   // Then apply search query
+//   if (searchQuery.value) {
+//     const query = searchQuery.value.toLowerCase()
+//     filtered = filtered.filter(card =>
+//       card.question.toLowerCase().includes(query) ||
+//       card.answer.toLowerCase().includes(query)
+//     )
+//   }
 
-  return filtered
-})
+//   return filtered
+// })
 
 const setActiveFilter = (filter: string) => {
   activeFilter.value = filter
@@ -142,88 +177,56 @@ const setActiveFilter = (filter: string) => {
 
 <template>
   <div class="lib-page">
-    <TopBar 
-      :info="'Library'"
-      :status="'4 groups'"/>
+    <TopBar :info="'Library'" :status="'4 groups'" />
     <div class="controls">
       <div style="width: 90%; margin: 0 auto;">
         <div class="search-container">
           <div class="input-wrapper">
-            <input 
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search cards..."
-              class="search-input"
-            />
-            <button 
-              v-if="searchQuery"
-              class="clear-button"
-              @click="clearSearch"
-            >
+            <input v-model="searchQuery" type="text" placeholder="Search cards..." class="search-input" />
+            <button v-if="searchQuery" class="clear-button" @click="clearSearch">
               ×
             </button>
           </div>
         </div>
-        <div class="filter-tabs">
-          <button 
-            class="filter-tab"
-            :class="{ active: activeFilter === 'all' }"
-            @click="setActiveFilter('all')"
-          >
+        <!-- <div class="filter-tabs">
+          <button class="filter-tab" :class="{ active: activeFilter === 'all' }" @click="setActiveFilter('all')">
             All
           </button>
-          <button 
-            v-for="group in cardGroups" 
-            :key="group.id"
-            class="filter-tab"
-            :class="{ active: activeFilter === group.title }"
-            @click="setActiveFilter(group.title)"
-          >
+          <button v-for="group in cardGroups" :key="group.id" class="filter-tab"
+            :class="{ active: activeFilter === group.title }" @click="setActiveFilter(group.title)">
             {{ group.title }}
           </button>
-        </div>
+        </div> -->
       </div>
     </div>
 
     <div class="cards-grid">
-      <div v-for="card in filteredCards" :key="card.id" class="card">
+      <div v-for="card in cards" :key="card.id" class="card">
         <h3>{{ card.question }}</h3>
         <p>{{ card.answer }}</p>
       </div>
     </div>
-    
+
     <!-- 修改后的WebDAV同步按钮 - 移到lib-page内部 -->
     <div class="webdav-sync-container">
       <!-- 同步选项菜单 -->
       <div v-if="showSyncOptions" class="sync-options">
-        <button 
-          @click="uploadDatabase" 
-          class="sync-option-btn"
-          :disabled="isUploading || isDownloading"
-        >
+        <button @click="uploadDatabase" class="sync-option-btn" :disabled="isUploading || isDownloading">
           <span class="sync-icon">↑</span>
           上传数据库
         </button>
-        <button 
-          @click="downloadDatabase" 
-          class="sync-option-btn"
-          :disabled="isUploading || isDownloading"
-        >
+        <button @click="downloadDatabase" class="sync-option-btn" :disabled="isUploading || isDownloading">
           <span class="sync-icon">↓</span>
           下载数据库
         </button>
       </div>
-      
+
       <!-- 主同步按钮 -->
-      <button 
-        @click="toggleSyncOptions" 
-        class="webdav-sync-btn"
-        :class="{ 'active': showSyncOptions }"
-      >
+      <button @click="toggleSyncOptions" class="webdav-sync-btn" :class="{ 'active': showSyncOptions }">
         <span class="sync-icon">⇅</span>
       </button>
     </div>
-    
+
     <!-- 同步消息提示 - 移到lib-page内部 -->
     <div v-if="showSyncMessage" class="sync-message">
       {{ syncMessage }}
@@ -233,19 +236,22 @@ const setActiveFilter = (filter: string) => {
 
 <style scoped>
 .lib-page {
-  padding: 20px;
+  /* padding: 20px; */
   background-color: #1e1e1e;
   min-height: 100vh;
-  padding-bottom: 100px; /* 为底部导航留出空间 */
+  padding-bottom: 8vh;
+  /* 为底部导航留出空间 */
 }
 
 .controls {
-  position: sticky;
-  top: 70px;
-  width: 100%;
+  position: fixed;
+  top: 10vh;
+  width: 100vw;
+  height: 7vh;
+  /* margin-left: -20px; */
   background-color: #1e1e1e;
   z-index: 10;
-  padding-bottom: 10px;
+  padding-bottom: 2vh;
 }
 
 .search-container {
@@ -260,14 +266,15 @@ const setActiveFilter = (filter: string) => {
 
 .search-input {
   width: 100%;
+  height: 5vh;
   padding-right: 40px;
   padding: 12px 20px;
-  margin: 8px 0;
+  /* margin: 8px 0; */
   border: 2px solid #333;
   border-radius: 5px;
   font-size: 16px;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.15s;
   background-color: #2d2d2d;
   color: white;
 }
@@ -297,7 +304,7 @@ const setActiveFilter = (filter: string) => {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  transition: all 0.3s;
+  transition: all 0.15s;
 }
 
 .clear-button:hover {
@@ -314,7 +321,7 @@ const setActiveFilter = (filter: string) => {
   color: white;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.15s;
 }
 
 .search-button:hover {
@@ -358,7 +365,7 @@ const setActiveFilter = (filter: string) => {
   color: #888;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.3s;
+  transition: all 0.15s;
 }
 
 .filter-tab:hover {
@@ -374,9 +381,10 @@ const setActiveFilter = (filter: string) => {
 .cards-grid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px 0;
+  gap: 2vh;
+  padding: 2.1vh 0 2vh 0;
   width: 100%;
+  margin-top: 15vh;
 }
 
 /* Webkit scrollbar styles */
@@ -402,12 +410,13 @@ const setActiveFilter = (filter: string) => {
 
 .card {
   padding: 20px;
-  background-color: #107c10;
+  background-color: #353535;
   border-radius: 5px;
   color: white;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  width: 100%;
+  transition: transform 0.15s ease;
+  width: 90vw;
+  margin-left: 5vw;
 }
 
 .card:hover {
@@ -457,10 +466,13 @@ const setActiveFilter = (filter: string) => {
 }
 
 .webdav-sync-btn {
-  width: 60px;
-  height: 60px;
+  position: fixed;
+  bottom: 13vh;
+  right: 5vw;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  background-color: #42b983;
+  background-color: #107c10;
   color: white;
   border: none;
   display: flex;
@@ -468,17 +480,17 @@ const setActiveFilter = (filter: string) => {
   align-items: center;
   font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
 }
 
 .webdav-sync-btn:hover {
-  background-color: #36986f;
+  background-color: #0e6a0e;
   transform: scale(1.05);
 }
 
 .webdav-sync-btn.active {
-  background-color: #36986f;
+  background-color: #0e6a0e;
   transform: rotate(180deg);
 }
 
@@ -506,7 +518,7 @@ const setActiveFilter = (filter: string) => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
   white-space: nowrap;
 }
 

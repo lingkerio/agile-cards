@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { CapacitorSQLite } from '@capacitor-community/sqlite';
-import databaseService from '../services/__databaseService';
+import databaseService from '../services/databaseService';
 import webdavService from '../services/webDavService';
 import TopBar from '../components/TopBar.vue';
 import { Capacitor } from '@capacitor/core';
@@ -403,7 +403,7 @@ input[disabled] {
   border-radius: 4px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
   flex: 1;
   min-width: 120px;
 }
