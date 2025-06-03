@@ -8,6 +8,7 @@ import databaseService from '@/services/__databaseService.ts'
 import { SqliteService } from '@/services/sqliteService'
 import { useAppInitStore } from '@/stores/appInitStore'
 import router from '@/router'
+import cardNotExist from '@/assets/images/cardnotexist.png'
 
 const sqlite = new SqliteService();
 
@@ -23,18 +24,31 @@ interface Cards {
   answer:     string;
 };
 
+interface Group {
+  id:          number;
+  title:       string;
+  description: string;
+};
+
 const appInit = useAppInitStore();
 const cards = ref<Cards[]>([]);
+const group = ref<Group[]>([]);
 
-async function loadCards() {
+async function loadCardsAndGroup() {
   try {
-    const cardsqlite = await sqlite.getCards();
-    cards.value = await Promise.all(cardsqlite.map(async card => ({
-      id: card.card_id ?? 0,
-      group_id: card.group_id,
+    const cardsSqlite = await sqlite.getCards();
+    cards.value = await Promise.all(cardsSqlite.map(async card => ({
+      id:         card.card_id ?? 0,
+      group_id:   card.group_id,
       group_name: (await sqlite.getGroupByID(card.group_id))?.[0]?.group_name,
-      question: card.question,
-      answer: card.answer ?? ""
+      question:   card.question,
+      answer:     card.answer ?? ""
+    })));
+    const groupSqlite = await sqlite.getGroup();
+    group.value = await Promise.all(groupSqlite.map(async group => ({
+      id:          group.group_id ?? 0,
+      title:       group.group_name,
+      description: group.group_dis ?? ""
     })));
   } catch (error: any) {
     console.error('Failed to load card cards: ', error);
@@ -42,6 +56,41 @@ async function loadCards() {
 }
 
 const searchQuery = ref('')
+const isSearchGroup = ref<boolean>(false);
+const searchGroup = ref<Group | null>();
+
+const clearSearch = () => {
+  searchQuery.value = '';
+  isSearchGroup.value = false;
+}
+
+const filteredCards = computed(() => {
+  let filtered = cards.value  // 直接使用 cards，解构时已经获取了 value
+
+  if (searchQuery.value && searchQuery.value.startsWith('group::')) {
+    const query = searchQuery.value.slice('group::'.length).toLowerCase();
+    isSearchGroup.value = group.value.some(g => query === g.title);
+    if (isSearchGroup.value) {
+      searchGroup.value = group.value.find(g => query === g.title);
+      filtered = filtered.filter(card => card.group_id === searchGroup.value?.id);
+    } else {
+      searchGroup.value = null;
+      filtered = filtered.filter(card => card.group_name.toLowerCase().includes(query));
+    }
+  } else {
+    searchGroup.value = null;
+    isSearchGroup.value = false;
+    if (searchQuery.value) {
+      const query = searchQuery.value.toLowerCase()
+      filtered = filtered.filter(card =>
+        card.question.toLowerCase().includes(query) ||
+        card.answer.toLowerCase().includes(query)
+      )
+    }
+  }
+
+  return filtered
+})
 
 onMounted(() => {
   if (props.filter) {
@@ -50,7 +99,7 @@ onMounted(() => {
   watchEffect(async () => {
     if (appInit.isDbInitialized) {
       console.log('DB is initialized, proceeding to load card groups.');
-      await loadCards();
+      await loadCardsAndGroup();
     } else if (appInit.dbInitializationError) {
       console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
     } else {
@@ -83,7 +132,7 @@ const uploadDatabase = async () => {
       databaseService.db = null;
     }
 
-    await webdavService.uploadDatabaseToWebDAV('knowledgeCardsDB', '/backup/database.json');
+    await webdavService.uploadDatabaseToWebDAV('knowledgeCardsDB');
 
     // 重新初始化数据库连接
     await databaseService.init();
@@ -117,7 +166,7 @@ const downloadDatabase = async () => {
       databaseService.db = null;
     }
 
-    await webdavService.downloadDatabaseFromWebDAV('/backup/database.json', 'knowledgeCardsDB');
+    await webdavService.downloadDatabaseFromWebDAV('/backup/database.json');
 
     // 重新初始化数据库连接
     await databaseService.init();
@@ -143,26 +192,45 @@ const toggleSyncOptions = () => {
   showSyncOptions.value = !showSyncOptions.value;
 };
 
-const clearSearch = () => {
-  searchQuery.value = '';
+const submitDel = async () => {
+  if (window.confirm('确定要删除该卡片组吗？')) {
+    if (searchGroup.value?.title === '默认') {
+      alert('您无法删除默认分组!');
+    } else {
+      await sqlite.dropGroupByID(searchGroup.value?.id ?? 0);
+      await sqlite.closeDB();
+      searchQuery.value = '';
+      isFix.value = false;
+      await loadCardsAndGroup();
+      router.push('/lib');
+    }
+  }
 }
 
-const filteredCards = computed(() => {
-  let filtered = cards.value  // 直接使用 cards，解构时已经获取了 value
+const isFix = ref<boolean>(false);
+const fixTitle = ref<string>('');
+const fixDescription = ref<string>('');
 
-  // Then apply search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(card =>
-      card.question.toLowerCase().includes(query) ||
-      card.answer.toLowerCase().includes(query) ||
-      card.group_name.toLowerCase().includes(query)
-    )
+const changeIsFix = () => {
+  isFix.value = !isFix.value;
+}
+
+const submitFix = async () => {
+  if (window.confirm('您确认提交修改吗？')) {
+    if (searchGroup.value?.title === '默认') {
+      alert('您无法删修改默认分组!');
+    } else {
+      console.log('fix', fixTitle.value, fixDescription.value);
+      const submitGroup = {
+        group_id: searchGroup.value?.id,
+        group_name: fixTitle.value,
+        group_dis: fixDescription.value
+      };
+      await sqlite.updateGroupOfID(submitGroup);
+      router.push('/home');
+    }
   }
-
-  return filtered
-})
-
+}
 </script>
 
 <template>
@@ -182,6 +250,25 @@ const filteredCards = computed(() => {
     </div>
 
     <div class="cards-grid">
+      
+      <transition name="fade">
+        <div v-if="isSearchGroup" class="group-control">
+          <div class="group-control-wrapper">
+            <p class="group-remind">卡片组：{{ searchGroup?.title }}</p>
+            <div class="group-control-fix" @click="changeIsFix" :class="{ active: isFix }">修改</div>
+            <div class="group-control-del" @click="submitDel">删除</div>
+          </div>
+          <p class="group-control-description">卡片组描述：{{ searchGroup?.description || "无描述..." }}</p>
+          <transition name="fade">
+            <div v-if="isFix" class="group-control-fixbar">
+              <input v-model="fixTitle" class="title" placeholder="请输入更新后的卡片组名称"></input>
+              <input v-model="fixDescription" class="description" placeholder="请输入更新后的卡片组描述"></input>
+              <div class="submit-btn" @click="submitFix">提交</div>
+            </div>
+          </transition>
+        </div>
+      </transition>
+
       <div 
         v-for="card in filteredCards" 
         :key="card.id" 
@@ -197,6 +284,13 @@ const filteredCards = computed(() => {
           </div>
         </div>
       </div>
+
+      <transition name="fade">
+        <div v-if="filteredCards.length == 0" class="not-exist">
+          <img :src="cardNotExist" alt="Card Not Exist" width="100%">
+          <p>不存在卡片...</p>
+        </div>
+      </transition>
     </div>
 
     <!-- 修改后的WebDAV同步按钮 - 移到lib-page内部 -->
@@ -227,6 +321,150 @@ const filteredCards = computed(() => {
 </template>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease-in-out;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+}
+
+.group-control-fixbar {
+  width: calc(100% - 10px);
+  /* padding: 10px; */
+  margin: 5px;
+  margin-top: 10px;
+  /* background-color: red; */
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 1fr 50px;  
+  grid-template-rows: 1fr 1fr;      
+  gap: 10px;                        
+  align-items: stretch;
+}
+
+.title {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  width: 100%;
+  resize: none;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  background-color: #2a2a2a;
+  color: white;
+  transition: border 0.15s;
+  overflow: hidden;
+  height: 50px;
+}
+
+.description {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  width: 100%;
+  resize: none;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  background-color: #2a2a2a;
+  color: white;
+  transition: border 0.15s;
+  overflow: hidden;
+  height: 50px;
+}
+
+.title:focus,
+.description:focus {
+  outline: none;
+  border: 1px solid #107c10;
+}
+
+.submit-btn {
+  grid-column: 2 / 3;
+  grid-row: 1 / 3; /* 跨两行 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #107c10;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  height: 100%; /* 填满两行高度 */
+}
+
+.group-control-description {
+  width: calc(100% - 10px);
+  padding: 10px;
+  margin: 5px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background-color: #353535;
+}
+
+.group-control-wrapper {
+ position: relative;
+}
+
+.group-control-fix {
+  position: absolute;
+  top: 5px;
+  right: 70px;
+  padding: 6px 10px;
+  background-color: #353535;
+  border-radius: 10px;
+  transition: color 0.15s;
+}
+
+.group-control-fix.active {
+  background-color: #107c10
+}
+
+.group-control-del {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 6px 10px;
+  background-color: #353535;
+  border-radius: 10px;
+}
+
+.group-control-del:hover {
+  background-color: #da3b01
+}
+
+.group-control {
+  /* display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  align-items: center;
+  flex-wrap: nowrap;
+  white-space: nowrap; */
+  padding: 10px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
+  border-radius: 12px; 
+  background: #222222;   
+  scrollbar-width: none; 
+  -ms-overflow-style: none;
+  width: 90vw;
+  margin-left: 5vw;
+}
+
+.group-remind {
+  font-weight: bold;
+  color: white;
+  border-radius: 10px;
+  padding: 10px;
+}
+
 .card-container {
   position: relative;
 }
@@ -255,7 +493,7 @@ const filteredCards = computed(() => {
   top: 0;
   bottom: 0;
   right: 100%;
-  width: 30px;
+  width: 50px;
   background: linear-gradient(
     to right, rgb(53, 53, 53, 0), rgb(53, 53, 53, 1)
   );
@@ -303,7 +541,7 @@ const filteredCards = computed(() => {
   padding-right: 40px;
   padding: 12px 20px;
   /* margin: 8px 0; */
-  border: 1px solid #333;
+  border: 1px solid #2d2d2d;
   border-radius: 10px;
   font-size: 16px;
   outline: none;
@@ -415,9 +653,10 @@ const filteredCards = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 2vh;
-  padding: 2.1vh 0 2vh 0;
+  padding-top: 2.1vh;
   width: 100%;
   margin-top: 15vh;
+  transition: 0.15s;
 }
 
 /* Webkit scrollbar styles */
@@ -464,6 +703,22 @@ const filteredCards = computed(() => {
 
 .card p {
   margin: 0;
+  opacity: 0.8;
+}
+
+.not-exist {
+  padding: 20px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  width: 90vw;
+  margin-left: 5vw;
+}
+
+.not-exist p {
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
   opacity: 0.8;
 }
 

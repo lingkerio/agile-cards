@@ -69,6 +69,7 @@ onMounted(async () => {
 
 <template>
   <div class="add-card-group-page">
+    <div class="return-button" @click="router.back()">< 返回</div>
     <div class="form-container">
       <h1>添加卡片</h1>
 
@@ -113,6 +114,21 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.return-button {
+  position: absolute;
+  left: 25px;
+  top: 45px;
+  background-color: #353535;
+  padding: 5px 10px;
+  border-radius: 10px;
+  z-index: 10;
+  transition: color 0.15s;
+}
+
+.return-button:hover {
+  background-color: #a62d00;
+}
+
 .group-select {
   display: flex;
   flex-direction: row;
@@ -167,7 +183,7 @@ onMounted(async () => {
   background-color: #2d2d2d;
   border-radius: 10px;
   padding: 7px;
-  transform: color 0.15s;
+  transition: color 0.15s;
 }
 
 .group-label.active {

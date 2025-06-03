@@ -6,6 +6,8 @@ import type { Group, Cards } from '@/services/sqliteService';
 
 const question = ref<string>("");
 const answer = ref<string>("");
+const group_name = ref<string>("");
+const router = useRouter();
 
 const sqlite = new SqliteService();
 
@@ -13,18 +15,32 @@ const props = defineProps<{
   card_id: string
 }>()
 
+const handleClick = async () => {
+  if (window.confirm("确认要删除该卡片吗？")) {
+    await sqlite.dropCardsByID(Number(props.card_id));
+    router.push('/lib');
+  } 
+}
+
 onMounted(async () => {
   console.log(props.card_id);
   const card: Cards = (await sqlite.getCardsByID(Number(props.card_id)))?.[0];
+  const group: Group = (await sqlite.getGroupByID(Number(card.group_id)))?.[0];
   question.value = card.question;
   answer.value = card.answer ?? "";
+  group_name.value = group.group_name;
 })
 </script>
 
 <template>
   <div class="card-page">
+    <div class="return-button" @click="router.back()">< 返回</div>
     <div class="form-container">
-      <h1>卡片内容</h1>
+      <div class="title-container">
+        <h1>卡片内容</h1>
+        <h2>卡片组：{{ group_name }}</h2>
+        <div class="delete-card" @click="handleClick">删除</div>
+      </div>
 
       <div class="input">
         <p class="title">问题</p>
@@ -41,6 +57,21 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.return-button {
+  position: absolute;
+  left: 25px;
+  top: 45px;
+  background-color: #353535;
+  padding: 5px 10px;
+  border-radius: 10px;
+  z-index: 10;
+  transition: color 0.15s;
+}
+
+.return-button:hover {
+  background-color: #a62d00;
+}
+
 .card-page {
   min-height: 100vh;
   background-color: #1e1e1e;
@@ -51,6 +82,10 @@ onMounted(async () => {
   padding: 40px 20px;
   box-sizing: border-box;
   padding-bottom: 95px;
+}
+
+.title-container {
+  position: relative;
 }
 
 .form-container {
@@ -64,8 +99,28 @@ onMounted(async () => {
 h1 {
   font-size: 28px;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
   text-align: center;
+}
+
+h2 {
+  font-size: 16px;
+  margin-bottom: 5px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.delete-card {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 5px;
+  background-color: #da3b01;
+  border-radius: 10px;
+}
+
+.delete-card:hover {
+  background-color: #a62d00;
 }
 
 .input {

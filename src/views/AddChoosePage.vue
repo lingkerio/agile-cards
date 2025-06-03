@@ -16,6 +16,7 @@ const jumpAddCards = () => {
 
 <template>
   <div class="add-choose-page">
+    <div class="return-button" @click="router.back()">< 返回</div>
     <div class="form-container">
       <h1>选择添加类型</h1>
       <button @click="jumpAddGroup" class="add-button">添加卡片组</button>
@@ -25,6 +26,21 @@ const jumpAddCards = () => {
 </template>
 
 <style scoped>
+.return-button {
+  position: absolute;
+  left: 25px;
+  top: 45px;
+  background-color: #353535;
+  padding: 5px 10px;
+  border-radius: 10px;
+  z-index: 10;
+  transition: color 0.15s;
+}
+
+.return-button:hover {
+  background-color: #a62d00;
+}
+
 .add-choose-page {
   min-height: 100vh;
   background-color: #1e1e1e;

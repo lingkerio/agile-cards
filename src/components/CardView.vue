@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineProps } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -11,7 +11,7 @@ const props = defineProps<{
 }>();
 
 const handleClick = () => {
-  router.push(`/lib/groups/${props.title}`);
+  router.push(`/lib/groups/group::${props.title}`);
 };
 </script>
 

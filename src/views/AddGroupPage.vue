@@ -35,6 +35,7 @@ const handleSubmit = async () => {
 
 <template>
   <div class="add-card-group-page">
+    <div class="return-button" @click="router.back()">< 返回</div>
     <div class="form-container">
       <h1>添加卡片组</h1>
 
@@ -53,6 +54,21 @@ const handleSubmit = async () => {
 </template>
 
 <style scoped>
+.return-button {
+  position: absolute;
+  left: 25px;
+  top: 45px;
+  background-color: #353535;
+  padding: 5px 10px;
+  border-radius: 10px;
+  z-index: 10;
+  transition: color 0.15s;
+}
+
+.return-button:hover {
+  background-color: #a62d00;
+}
+
 .add-card-group-page {
   min-height: 100vh;
   background-color: #1e1e1e;

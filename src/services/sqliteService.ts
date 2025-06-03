@@ -140,6 +140,40 @@ export class SqliteService {
     return result.values as Cards[];
   }
 
+  // Drop group by id
+  async dropGroupByID(id: number): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    let result = await this.db.query(`
+      DELETE FROM \`Cards\` WHERE group_id = ?;
+    `, [id]);
+    result = await this.db.query(`
+      DELETE FROM \`Group\` WHERE group_id = ? AND group_name <> ?;
+    `, [id, '默认']);
+    return result.values?.[0];
+  }
+
+  // Drop cards by id
+  async dropCardsByID(id: number): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`
+      DELETE FROM \`Cards\` WHERE card_id = ?;
+    `, [id]);
+    return result.values?.[0];
+  }
+
+  // Update group of id
+  async updateGroupOfID(group: Group): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`
+      UPDATE \`Group\` SET group_name = ?, group_dis = ?
+      WHERE group_id = ? AND group_name != ?;
+    `, [group.group_name, group.group_dis ?? "", group.group_id, '默认']);
+    return result.values?.[0];
+  }
+
   // Get group number
   async getGroupNum(): Promise<number> {
     if (!this.db) await this.initDB();
