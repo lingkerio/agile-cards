@@ -1,5 +1,3 @@
-// src/interfaces/database.ts (或者你喜欢的任何路径)
-
 export interface KnowledgeCard {
   id?: number; // 数据库自增ID，插入时可能没有
   question: string;
@@ -25,3 +23,9 @@ export interface KnowledgeCardGroup {
 
 // 用户对卡片的评分
 export type ReviewScore = 0 | 1 | 2 | 3 | 4 | 5;
+
+// 应用配置接口
+export interface AppConfig {
+  key: string;
+  value: string;
+}
