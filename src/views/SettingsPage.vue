@@ -10,63 +10,49 @@ const webdavPassword = ref('');
 const llmUrl = ref('');
 const llmToken = ref('');
 
-// 用户名与头像
 const username = ref('游客');
 const avatar = ref('');
 
-// 保存WebDAV设置
+// 保存 WebDAV 设置
 const saveWebDAVSettings = () => {
   try {
-    // 保存WebDAV URL
     configService.setConfig('WEBDAV_SERVER_URL', webdavUrl.value);
-    
-    // 将用户名和密码转换为Base64编码的认证令牌
     const authToken = btoa(`${webdavUsername.value}:${webdavPassword.value}`);
     configService.setConfig('WEBDAV_AUTH_TOKEN', authToken);
-    
-    // 保存到本地存储以便持久化
     localStorage.setItem('webdavUrl', webdavUrl.value);
     localStorage.setItem('webdavUsername', webdavUsername.value);
-    localStorage.setItem('webdavPassword', webdavPassword.value); // 保存密码
+    localStorage.setItem('webdavPassword', webdavPassword.value);
     localStorage.setItem('webdavAuthToken', authToken);
-    
-    alert('WebDAV设置已保存');
+    alert('WebDAV 设置已保存');
   } catch (error) {
-    console.error('保存WebDAV设置失败:', error);
+    console.error('保存 WebDAV 设置失败:', error);
     alert('保存设置失败，请检查输入');
   }
 };
 
-// 加载保存的设置
+// 初始化配置加载
 onMounted(() => {
-  // 从本地存储加载WebDAV设置
   const savedUrl = localStorage.getItem('webdavUrl');
   const savedUsername = localStorage.getItem('webdavUsername');
-  const savedPassword = localStorage.getItem('webdavPassword'); // 加载密码
+  const savedPassword = localStorage.getItem('webdavPassword');
   const savedAuthToken = localStorage.getItem('webdavAuthToken');
-  
+
   if (savedUrl) webdavUrl.value = savedUrl;
   if (savedUsername) webdavUsername.value = savedUsername;
-  if (savedPassword) webdavPassword.value = savedPassword; // 设置密码
-  
-  // 如果有保存的认证令牌，也更新到CONFIG
-  if (savedAuthToken) {
-    configService.setConfig('WEBDAV_AUTH_TOKEN', savedAuthToken);
-  }
-  
-  // 从CONFIG加载初始值（如果本地存储没有）
+  if (savedPassword) webdavPassword.value = savedPassword;
+  if (savedAuthToken) configService.setConfig('WEBDAV_AUTH_TOKEN', savedAuthToken);
+
   if (!savedUrl && CONFIG.WEBDAV_SERVER_URL) {
     webdavUrl.value = CONFIG.WEBDAV_SERVER_URL;
   }
-  
-  // 如果有认证令牌但没有用户名，尝试解码（注意：这不会显示密码）
+
   if (savedAuthToken && !savedUsername) {
     try {
       const decoded = atob(savedAuthToken);
-      const [username] = decoded.split(':');
-      if (username) webdavUsername.value = username;
+      const [usernamePart] = decoded.split(':');
+      if (usernamePart) webdavUsername.value = usernamePart;
     } catch (e) {
-      console.error('解码认证令牌失败:', e);
+      console.error('认证令牌解码失败:', e);
     }
   }
 });
@@ -74,7 +60,7 @@ onMounted(() => {
 const onAvatarChange = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (file) {
-    avatar.value = URL.createObjectURL(file); // 仅前端预览
+    avatar.value = URL.createObjectURL(file);
   }
 };
 
@@ -86,67 +72,61 @@ const toggleTheme = () => {
 
 const clearCache = () => {
   localStorage.clear();
-  alert('学习进度与缓存已清除');
+  alert('本地缓存已清除');
 };
 
-const logout = () => {
-  alert('您已退出账号');
+const resetAll = () => {
+  localStorage.clear();
+  location.reload();
 };
 </script>
 
 <template>
   <div class="settings-page">
-    <div class="title-section">
-      <h2 class="title">
-        <span class="green-square"></span>
-        系统设置
-      </h2>
-    </div>
+    <div class="form-container">
+      <h1>系统设置</h1>
 
-    <!-- ✅ 用户头像和用户名 -->
-    <div class="profile-section">
-      <label for="avatar-upload" class="avatar">
-        <img v-if="avatar" :src="avatar" alt="头像" />
-        <div v-else class="placeholder">+</div>
-        <input id="avatar-upload" type="file" accept="image/*" @change="onAvatarChange" />
-      </label>
-      <input v-model="username" placeholder="请输入用户名" class="username-input" />
-    </div>
+      <!-- 用户头像与用户名 -->
+      <div class="setting-item avatar-block">
+        <label for="avatar-upload" class="avatar">
+          <img v-if="avatar" :src="avatar" alt="头像" />
+          <div v-else class="placeholder">+</div>
+          <input id="avatar-upload" type="file" accept="image/*" @change="onAvatarChange" />
+        </label>
+        <input v-model="username" placeholder="请输入用户名" class="username-input" />
+      </div>
 
-    <div class="setting-item">
-      <span>界面风格</span>
-      <span class="clickable" @click="toggleTheme">{{ isDark ? '夜间模式 🌙' : '日间模式 ☀️' }}</span>
-    </div>
+      <!-- 通用设置项 -->
+      <div class="setting-item clickable" @click="toggleTheme">
+        <span>主题设置</span>
+        <span>{{ isDark ? '夜间模式 🌙' : '日间模式 ☀️' }}</span>
+      </div>
 
-    <div class="setting-item clickable" @click="clearCache">
-      <span>清除学习数据</span>
-      <span>🗑️</span>
-    </div>
+      <div class="setting-item clickable" @click="clearCache">
+        <span>清除缓存与本地配置</span>
+        <span>🧹</span>
+      </div>
 
-    <div class="setting-item clickable logout" @click="logout">
-      <span>退出当前账号</span>
-      <span>📕</span>
-    </div>
+      <div class="setting-item clickable danger" @click="resetAll">
+        <span>恢复默认设置</span>
+        <span>♻️</span>
+      </div>
 
-    <!-- ✅ WebDAV 设置 -->
-    <div class="setting-section">
-      <h3>🔧 WebDAV 设置</h3>
+      <!-- WebDAV 设置 -->
+      <h2>🔧 WebDAV 设置</h2>
       <input v-model="webdavUrl" placeholder="WebDAV 地址（URL）" />
-      <input v-model="webdavUsername" placeholder="WebDAV 账户" />
+      <input v-model="webdavUsername" placeholder="WebDAV 用户名" />
       <input v-model="webdavPassword" type="password" placeholder="WebDAV 密码" />
-      <button @click="saveWebDAVSettings" class="save-button">保存设置</button>
-      
+      <button class="add-button" @click="saveWebDAVSettings">保存设置</button>
+
       <div v-if="webdavUrl || webdavUsername" class="saved-settings">
-        <h4>已保存的设置:</h4>
         <p>URL: {{ webdavUrl || '未设置' }}</p>
-        <p>账户: {{ webdavUsername || '未设置' }}</p>
+        <p>用户名: {{ webdavUsername || '未设置' }}</p>
         <p>密码: {{ webdavPassword ? '******' : '未设置' }}</p>
       </div>
-    </div>
 
-    <!-- ✅ LLM 设置 -->
-    <div class="setting-section">
-      <h3>🤖 LLM 接口设置</h3>
+      <!-- LLM 设置 -->
+      <h2>🤖 LLM 接口设置</h2>
       <input v-model="llmUrl" placeholder="LLM API 地址" />
       <input v-model="llmToken" placeholder="LLM Token" />
     </div>
@@ -155,40 +135,90 @@ const logout = () => {
 
 <style scoped>
 .settings-page {
-  padding: 80px 20px;
-  color: white;
   min-height: 100vh;
   background-color: #1e1e1e;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px 100px; 
+  box-sizing: border-box;
 }
 
-.title-section {
-  text-align: center;
-  margin-bottom: 30px;
-}
 
-.title {
-  font-size: 22px;
-  font-weight: bold;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
-.green-square {
-  width: 10px;
-  height: 10px;
-  background-color: #42b983;
-  border-radius: 2px;
-  margin-bottom: 8px;
-}
-
-/* ✅ 用户头像和用户名 */
-.profile-section {
+.form-container {
+  width: 100%;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+h1, h2 {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  background-color: #2a2a2a;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickable:hover {
+  background-color: #3a3a3a;
+}
+
+.danger {
+  color: #ff4d4f;
+}
+
+.danger:hover {
+  background-color: #5a1f1f;
+}
+
+input {
+  padding: 10px;
+  background-color: #2a2a2a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 100%;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.add-button {
+  background-color: #107c10;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.15s ease;
+  width: 100%;
+}
+
+.add-button:hover {
+  background-color: #0e6a0e;
+}
+
+.avatar-block {
+  flex-direction: column;
+  align-items: center;
 }
 
 .avatar {
@@ -220,93 +250,15 @@ const logout = () => {
 }
 
 .username-input {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: none;
-  background-color: #2a2a2a;
-  color: white;
-  font-size: 16px;
   width: 200px;
   text-align: center;
 }
 
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #2a2a2a;
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 16px;
-  margin-bottom: 14px;
-}
-
-.clickable {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.clickable:hover {
-  background-color: #3a3a3a;
-}
-
-.logout {
-  color: #ff6b6b;
-}
-
-.setting-section {
-  margin-top: 30px;
-  padding: 0 10px;
-}
-
-.setting-section h3 {
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-.setting-section input {
-  display: block;
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 10px;
-  background-color: #2a2a2a;
-  color: white;
-  border: none;
-  border-radius: 6px;
-}
-
-.save-button {
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 15px;
-  font-size: 16px;
-  cursor: pointer;
-  margin-top: 10px;
-  width: 100%;
-}
-
-.save-button:hover {
-  background-color: #36986f;
-}
-
 .saved-settings {
-  margin-top: 20px;
   padding: 15px;
   background-color: #2a2a2a;
   border-radius: 6px;
-}
-
-.saved-settings h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #42b983;
-}
-
-.saved-settings p {
-  margin: 5px 0;
   font-size: 14px;
+  color: #aaa;
 }
 </style>
