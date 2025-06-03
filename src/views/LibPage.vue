@@ -50,6 +50,8 @@ async function loadCardsAndGroup() {
       title:       group.group_name,
       description: group.group_dis ?? ""
     })));
+    cardsNum.value = await sqlite.getCardsNum();
+    groupNum.value = await sqlite.getGroupNum();
   } catch (error: any) {
     console.error('Failed to load card cards: ', error);
   }
@@ -231,11 +233,18 @@ const submitFix = async () => {
     }
   }
 }
+
+const cardsNum = ref<number>(0);
+const groupNum = ref<number>(0);
+
+const jumpGroup = (group_name: string) => {
+  searchQuery.value = "group::" + group_name;
+}
 </script>
 
 <template>
   <div class="lib-page">
-    <TopBar :info="'Library'" :status="'4 groups'" />
+    <TopBar :info="'卡片库'" :status="groupNum + ' 个卡片组'" :card_num="cardsNum"/>
     <div class="controls">
       <div style="width: 90%; margin: 0 auto;">
         <div class="search-container">
@@ -274,15 +283,17 @@ const submitFix = async () => {
         :key="card.id" 
         class="card"
       >
-        <div class="card-container" @click="router.push(`/lib/cards/${card.id}`)">
-          <h3 class="truncate-h3">{{ card.question }}</h3>
-          <p class="truncate-p">{{ card.answer }}</p>
-          <div class="card-group-wrapper">
-            <div class="card-group">
-              {{ card.group_name }}
+        <transition name="fade">
+          <div class="card-container" @click="router.push(`/lib/cards/${card.id}`)">
+            <h3 class="truncate-h3">{{ card.question }}</h3>
+            <p class="truncate-p">{{ card.answer }}</p>
+            <div class="card-group-wrapper">
+              <div class="card-group" @click.stop="jumpGroup(card.group_name)">
+                {{ card.group_name }}
+              </div>
             </div>
           </div>
-        </div>
+        </transition>
       </div>
 
       <transition name="fade">
@@ -735,7 +746,7 @@ const submitFix = async () => {
 
 .webdav-sync-btn {
   position: fixed;
-  bottom: 13vh;
+  bottom: 90px;
   right: 5vw;
   width: 70px;
   height: 70px;

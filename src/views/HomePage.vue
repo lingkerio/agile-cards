@@ -32,6 +32,7 @@ async function loadCardGroups() {
       subtitle: group.group_dis ?? ""
     }));
     console.log('Card groups loaded:', cardGroups.value);
+    cardsNum.value = await sqlite.getCardsNum();
   } catch (error: any) {
     console.error('Failed to load card groups:', error);
   } 
@@ -53,6 +54,8 @@ const prevCard = () => {
   }
 };
 
+const cardsNum = ref<number>(0);
+
 onMounted(() => {
   document.title = 'Cards - Home Page';
   console.log('Component mounted. Waiting for DB initialization...');
@@ -72,7 +75,7 @@ onMounted(() => {
 
 <template>
   <div class="home-page">
-    <TopBar :info="'Username'" :status="'Online'" />
+    <TopBar :info="'电脑玩家'" :status="'在线'" :card_num="cardsNum"/>
 
     <div class="card-list">
       <div class="title">卡片组列表</div>
@@ -124,7 +127,7 @@ onMounted(() => {
 .title {
   height: 8vh;
   margin-bottom: 0;
-  font-size: 2rem; 
+  font-size: 4vh; 
   font-weight: 500;    
   padding-left: 5vw;  
   text-align: left;    
@@ -159,7 +162,7 @@ onMounted(() => {
 
 .card-wrapper {
   width: 85vw;
-  height: 70vh;
+  height: 68vh;
   /* max-width: 500px; */
   transition: all 0.15s ease;
 }

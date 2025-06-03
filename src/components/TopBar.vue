@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
 
 // const opacity = ref(0);
 
@@ -17,8 +16,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
 // });
 
 const props = defineProps<{
-  info: string;
-  status: string;
+  info:     string;
+  status:   string;
+  card_num: number;
 }>();
 </script>
 
@@ -34,7 +34,7 @@ const props = defineProps<{
       </div>
     </div>
     <div class="card-info">
-      <div class="card-count">4 cards</div>
+      <div class="card-count">{{ card_num }} 张卡片</div>
     </div>
   </div>
 </template>
@@ -84,6 +84,7 @@ const props = defineProps<{
   font-weight: bold;
   color: white;
   font-size: 16px;
+  padding-bottom: 0.1vh;
 }
 
 .status {
@@ -98,9 +99,14 @@ const props = defineProps<{
 }
 
 .card-info {
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 6px 12px;
-  border-radius: 5px;
+  background-color: #353535;
+  padding: 8px 12px;
+  border-radius: 10px;
+  height: 4vh;
+  display: flex;
+  align-items: center;    
+  justify-content: center;
+  text-align: center;
 }
 
 .card-count {

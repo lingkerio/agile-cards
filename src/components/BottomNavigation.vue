@@ -106,8 +106,8 @@ const setActiveTab = (tab: string) => {
 }
 
 .icon {
-  width: 2.5vh;
-  height: 2.5vh;
+  width: 25px;
+  height: 25px;
   margin-top: -1vh;
   margin-bottom: 3px;
 }
