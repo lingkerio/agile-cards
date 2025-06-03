@@ -23,7 +23,7 @@ onMounted(async () => {
     // 在这里调用 resetDatabase，它会确保数据库打开、表创建、并插入初始数据
     await sqliteService.resetDatabase();
     message.value = '数据库重置并初始化成功！点击“加载下一张卡片”开始复习。';
-    console.log('数据库重置并初始化成功！');
+    // console.log('数据库重置并初始化成功！');
 
     // 可以在初始化后立即加载第一张卡片，以便用户直接开始测试
     await loadDueCards();
@@ -38,7 +38,7 @@ onMounted(async () => {
 onUnmounted(async () => {
   try {
     await sqliteService.close();
-    console.log('数据库连接已关闭。');
+    // console.log('数据库连接已关闭。');
   } catch (e: any) {
     console.error('关闭数据库连接失败:', e);
   }
@@ -64,7 +64,7 @@ const loadDueCards = async () => {
         message.value = '所有卡片都已复习或学习中，今天没有到期卡片了。';
       }
     }
-    console.log('当前待复习卡片：', cardsDue.value);
+    // console.log('当前待复习卡片：', cardsDue.value);
   } catch (e: any) {
     message.value = `加载卡片失败: ${e.message}`;
     console.error('加载卡片失败:', e);
@@ -85,7 +85,7 @@ const reviewCard = async (score: ReviewScore) => {
     const cardIdToReview = currentCard.value.id;
     await sqliteService.updateCardReviewStatus(cardIdToReview, score);
     message.value = `卡片 ID ${cardIdToReview} 复习完成，评分为 ${score}。`;
-    console.log(`卡片 ${cardIdToReview} 状态已更新。`);
+    // console.log(`卡片 ${cardIdToReview} 状态已更新。`);
 
     await loadDueCards(); // 自动加载下一张卡片
 
@@ -107,7 +107,7 @@ const addNewTestCard = async () => {
     };
     const newCardId = await sqliteService.addCard(newCardData);
     message.value = `新卡片添加成功，ID 为 ${newCardId}。`;
-    console.log('新卡片添加成功，ID:', newCardId);
+    // console.log('新卡片添加成功，ID:', newCardId);
   } catch (e: any) {
     message.value = `添加新卡片失败: ${e.message}`;
     console.error('添加新卡片失败:', e);
@@ -128,7 +128,7 @@ const deleteTestCard = async () => {
       const cardIdToDelete = lastCard[0].id; // 获取最后一张卡片的 ID
       await sqliteService.deleteCard(cardIdToDelete);
       message.value = `卡片 ID ${cardIdToDelete} 删除成功。`;
-      console.log(`卡片 ${cardIdToDelete} 删除成功。`);
+      // console.log(`卡片 ${cardIdToDelete} 删除成功。`);
 
       // 如果删除了当前显示的卡片，清空当前卡片
       if (currentCard.value && currentCard.value.id === cardIdToDelete) {
@@ -136,7 +136,7 @@ const deleteTestCard = async () => {
       }
     } else {
       message.value = '没有卡片可删除。';
-      console.log('没有卡片可删除。');
+      // console.log('没有卡片可删除。');
     }
   } catch (e: any) {
     message.value = `删除卡片失败: ${e.message}`;
@@ -151,7 +151,7 @@ const loadAllGroups = async () => {
   try {
     allGroups.value = await sqliteService.getAllGroups();
     message.value = `加载所有分组成功。`;
-    console.log('所有分组:', allGroups.value);
+    // console.log('所有分组:', allGroups.value);
   } catch (e: any) {
     message.value = `加载分组失败: ${e.message}`;
     console.error('加载分组失败:', e);
@@ -168,7 +168,7 @@ const addNewGroup = async () => {
       subtitle: '这是一个测试分组',
     });
     message.value = `新分组添加成功，ID 为 ${newGroupId}。`;
-    console.log('新分组添加成功，ID:', newGroupId);
+    // console.log('新分组添加成功，ID:', newGroupId);
     await loadAllGroups(); // 重新加载分组列表
   } catch (e: any) {
     message.value = `添加新分组失败: ${e.message}`;
@@ -183,7 +183,7 @@ const exportDatabase = async () => {
   try {
     exportedSQL.value = await sqliteService.exportToSQL();
     message.value = '数据库已成功导出为 SQL 字符串。请查看下方文本区域。';
-    console.log('导出的 SQL:', exportedSQL.value);
+    // console.log('导出的 SQL:', exportedSQL.value);
   } catch (e: any) {
     message.value = `导出数据库失败: ${e.message}`;
     console.error('导出数据库失败:', e);
@@ -202,7 +202,7 @@ const importDatabase = async () => {
     message.value = '正在导入数据库...';
     await sqliteService.importFromSQL(importSQLInput.value);
     message.value = '数据库导入成功！请重新加载卡片和分组以查看。';
-    console.log('数据库导入成功。');
+    // console.log('数据库导入成功。');
     // 导入后，需要重新加载数据以刷新UI
     await loadDueCards();
     await loadAllGroups();

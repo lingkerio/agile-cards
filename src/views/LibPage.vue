@@ -37,6 +37,7 @@ const group = ref<Group[]>([]);
 async function loadCardsAndGroup() {
   try {
     const cardsSqlite = await sqlite.getCards();
+    // console.log('Loaded cards', cardsSqlite);
     cards.value = await Promise.all(cardsSqlite.map(async card => ({
       id:         card.card_id ?? 0,
       group_id:   card.group_id,
@@ -100,18 +101,18 @@ onMounted(() => {
   }
   watchEffect(async () => {
     if (appInit.isDbInitialized) {
-      console.log('DB is initialized, proceeding to load card groups.');
+      // console.log('DB is initialized, proceeding to load card groups.');
       await loadCardsAndGroup();
     } else if (appInit.dbInitializationError) {
       console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
     } else {
-      console.log('DB not yet initialized, watchEffect is waiting...');
+      // console.log('DB not yet initialized, watchEffect is waiting...');
     }
   });
 })
 
 const handleWebDAVSync = () => {
-  console.log('点击了 WebDAV 同步按钮（预留）');
+  // console.log('点击了 WebDAV 同步按钮（预留）');
 };
 
 // 添加WebDAV同步相关状态和方法
@@ -222,7 +223,7 @@ const submitFix = async () => {
     if (searchGroup.value?.title === '默认') {
       alert('您无法删修改默认分组!');
     } else {
-      console.log('fix', fixTitle.value, fixDescription.value);
+      // console.log('fix', fixTitle.value, fixDescription.value);
       const submitGroup = {
         group_id: searchGroup.value?.id,
         group_name: fixTitle.value,

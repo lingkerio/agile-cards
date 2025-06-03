@@ -22,15 +22,15 @@ interface CardGroup {
 }
 
 async function loadCardGroups() {
-  console.log('Attempting to load card groups...');
+  // console.log('Attempting to load card groups...');
   try {
     const groups = await sqlite.getGroup();
+    // console.log('Card groups loaded:', groups);
     cardGroups.value = groups.map(group => ({
       id:       group.group_id ?? 0,
       title:    group.group_name,
       subtitle: group.group_dis ?? ""
     }));
-    console.log('Card groups loaded:', cardGroups.value);
     cardsNum.value = await sqlite.getCardsNum();
   } catch (error: any) {
     console.error('Failed to load card groups:', error);
@@ -57,16 +57,16 @@ const cardsNum = ref<number>(0);
 
 onMounted(() => {
   document.title = 'Cards - Home Page';
-  console.log('Component mounted. Waiting for DB initialization...');
+  // console.log('Component mounted. Waiting for DB initialization...');
 
   watchEffect(async () => {
     if (appInit.isDbInitialized) {
-      console.log('DB is initialized, proceeding to load card groups.');
+      // console.log('DB is initialized, proceeding to load card groups.');
       await loadCardGroups();
     } else if (appInit.dbInitializationError) {
       console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
     } else {
-      console.log('DB not yet initialized, watchEffect is waiting...');
+      // console.log('DB not yet initialized, watchEffect is waiting...');
     }
   });
 });

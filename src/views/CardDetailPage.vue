@@ -28,7 +28,7 @@ const handleDel = async () => {
 }
 
 const loadEverything = async () => {
-  console.log(props.card_id);
+  // console.log(props.card_id);
   const card: Cards = (await sqlite.getCardsByID(Number(props.card_id)))?.[0];
   const group: Group = (await sqlite.getGroupByID(Number(card.group_id)))?.[0];
   questionReal.value = question.value = card.question;

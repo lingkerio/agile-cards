@@ -58,11 +58,11 @@ const handleAddCard = async () => {
 onMounted(async () => {
   if (appInit.isDbInitialized) {
     await loadGroup();
-    console.log(group.value);
+    // console.log(group.value);
   } else if (appInit.dbInitializationError) {
     console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
   } else {
-    console.log('DB not yet initialized, watchEffect is waiting...');
+    // console.log('DB not yet initialized, watchEffect is waiting...');
   }
 })
 </script>

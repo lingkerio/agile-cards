@@ -9,7 +9,7 @@ export const useAppInitStore = defineStore('appInit', () => {
   function setDbInitialized() {
     isDbInitialized.value = true;
     dbInitializationError.value = null;
-    console.log('AppInitStore: DB state set to initialized.');
+    // console.log('AppInitStore: DB state set to initialized.');
   }
 
   function setDbInitializationError(errorMessage: string) {
@@ -21,7 +21,7 @@ export const useAppInitStore = defineStore('appInit', () => {
   function setDbInitializedAndResolve() {
     isDbInitialized.value = true;
     dbInitializationError.value = null;
-    console.log('AppInitStore: DB state set to initialized and promise resolved.');
+    // console.log('AppInitStore: DB state set to initialized and promise resolved.');
   }
 
   return {

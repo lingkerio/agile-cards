@@ -25,31 +25,31 @@ const databaseService = {
     try {
       // 如果数据库已初始化且连接已打开，则不执行任何操作
       if (this.db && (await this.db.isDBOpen()).result) {
-        console.log('数据库服务已初始化并打开');
+        // console.log('数据库服务已初始化并打开');
         return;
       }
 
-      console.log('正在初始化数据库服务...');
+      // console.log('正在初始化数据库服务...');
       
       // 检查平台
       const platform = Capacitor.getPlatform();
-      console.log(`当前平台: ${platform}`);
+      // console.log(`当前平台: ${platform}`);
       
       // 只在本地平台上初始化SQLite
       if (platform === 'web') {
-        console.log('Web平台不支持完整的SQLite功能，跳过初始化');
+        // console.log('Web平台不支持完整的SQLite功能，跳过初始化');
         return;
       }
       
       // 非Web平台初始化SQLite
-      console.log('正在设置数据库连接...');
+      // console.log('正在设置数据库连接...');
       
       // 强制关闭任何可能存在的同名连接，以防万一
       try {
         await CapacitorSQLite.closeConnection({ database: 'knowledgeCardsDB' });
-        console.log('强制关闭knowledgeCardsDB的现有连接');
+        // console.log('强制关闭knowledgeCardsDB的现有连接');
       } catch (e) {
-        console.log('无需关闭knowledgeCardsDB的现有连接或关闭失败:', e);
+        // console.log('无需关闭knowledgeCardsDB的现有连接或关闭失败:', e);
       }
 
       const db = await sqlite.createConnection('knowledgeCardsDB', false, 'no-encryption', 1, false);
@@ -78,7 +78,7 @@ const databaseService = {
       `);
 
       this.db = db;
-      console.log('数据库服务初始化成功.');
+      // console.log('数据库服务初始化成功.');
     } catch (error) {
       console.error('数据库初始化失败:', error);
       throw error;

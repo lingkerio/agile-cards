@@ -68,11 +68,11 @@ const webdavService: WebDAVService = {
     try {
       // 确保文件后缀为 .sql
       const formattedPath = remotePath.endsWith('.sql') ? remotePath : `${remotePath}.sql`
-      console.log(`准备导出数据库到WebDAV路径: ${formattedPath}`)
+      // console.log(`准备导出数据库到WebDAV路径: ${formattedPath}`)
 
       // 检查平台
       if (Capacitor.getPlatform() === 'web') {
-        console.log('Web平台不支持完整的SQLite功能，跳过导出')
+        // console.log('Web平台不支持完整的SQLite功能，跳过导出')
         throw new Error('Web平台不支持数据库导出功能，请在移动设备上使用')
       }
 
@@ -81,13 +81,13 @@ const webdavService: WebDAVService = {
       await dbService.initialize()
 
       // 使用 databaseService 导出为 SQL
-      console.log('尝试导出数据库为 SQL 字符串')
+      // console.log('尝试导出数据库为 SQL 字符串')
       const sqlString = await dbService.exportToSQL()
-      console.log('数据库导出为 SQL 成功')
+      // console.log('数据库导出为 SQL 成功')
 
       // 上传到WebDAV
       await this.uploadFileToWebDAV(sqlString, formattedPath, 'text/plain')
-      console.log('数据库上传成功!')
+      // console.log('数据库上传成功!')
 
       // 关闭数据库连接
       await dbService.close()
@@ -108,26 +108,26 @@ const webdavService: WebDAVService = {
     try {
       // 确保文件后缀为 .sql
       const formattedPath = remotePath.endsWith('.sql') ? remotePath : `${remotePath}.sql`
-      console.log(`开始从WebDAV下载数据库: ${formattedPath}`)
+      // console.log(`开始从WebDAV下载数据库: ${formattedPath}`)
 
       // 检查平台
       if (Capacitor.getPlatform() === 'web') {
-        console.log('Web平台不支持完整的SQLite功能，跳过下载')
+        // console.log('Web平台不支持完整的SQLite功能，跳过下载')
         throw new Error('Web平台不支持数据库下载功能，请在移动设备上使用')
       }
 
       // 下载SQL数据
       const sqlString = await this.downloadFileFromWebDAV(formattedPath)
-      console.log('SQL数据下载成功')
+      // console.log('SQL数据下载成功')
 
       // 创建数据库服务实例
       const dbService = new SqliteService()
       await dbService.initialize()
 
       // 使用 databaseService 导入 SQL
-      console.log('尝试导入 SQL 数据')
+      // console.log('尝试导入 SQL 数据')
       await dbService.importFromSQL(sqlString)
-      console.log('数据库导入成功!')
+      // console.log('数据库导入成功!')
 
       // 关闭数据库连接
       await dbService.close()
@@ -151,7 +151,7 @@ const webdavService: WebDAVService = {
     contentType: string = 'text/plain',
   ): Promise<void> {
     const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
-    console.log(`开始上传到WebDAV: ${absoluteUrl}`)
+    // console.log(`开始上传到WebDAV: ${absoluteUrl}`)
 
     // 确保目录存在
     await this.ensureDirectoryExists(remotePath)
@@ -185,7 +185,7 @@ const webdavService: WebDAVService = {
       })
 
       if (uploadResult.success) {
-        console.log(`XMLHttpRequest上传成功! 状态码: ${uploadResult.status}`)
+        // console.log(`XMLHttpRequest上传成功! 状态码: ${uploadResult.status}`)
         return
       } else {
         throw new Error(`XMLHttpRequest上传失败: 状态码 ${uploadResult.status}`)
@@ -199,7 +199,7 @@ const webdavService: WebDAVService = {
   // 使用XMLHttpRequest从WebDAV下载文件
   async downloadFileFromWebDAV(remotePath: string): Promise<any> {
     const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
-    console.log(`开始从WebDAV下载: ${absoluteUrl}`)
+    // console.log(`开始从WebDAV下载: ${absoluteUrl}`)
 
     // 使用XMLHttpRequest方法
     try {
@@ -230,7 +230,7 @@ const webdavService: WebDAVService = {
       })
 
       if (downloadResult.success && downloadResult.data) {
-        console.log(`XMLHttpRequest下载成功! 状态码: ${downloadResult.status}`)
+        // console.log(`XMLHttpRequest下载成功! 状态码: ${downloadResult.status}`)
         return downloadResult.data
       } else {
         throw new Error(`XMLHttpRequest下载失败: 状态码 ${downloadResult.status}`)
@@ -250,11 +250,11 @@ const webdavService: WebDAVService = {
 
     // 提取目录路径
     const dirPath = filePath.substring(0, filePath.lastIndexOf('/'))
-    console.log(`检查并创建目录: ${dirPath}`)
+    // console.log(`检查并创建目录: ${dirPath}`)
 
     // 构造目录URL
     const dirUrl = `${CONFIG.WEBDAV_SERVER_URL}${dirPath.startsWith('/') ? dirPath.substring(1) : dirPath}/.dir`
-    console.log(`尝试通过PUT请求创建目录标记: ${dirUrl}`)
+    // console.log(`尝试通过PUT请求创建目录标记: ${dirUrl}`)
 
     try {
       // 使用XMLHttpRequest创建目录
@@ -287,7 +287,7 @@ const webdavService: WebDAVService = {
       })
 
       if (result.success) {
-        console.log(`XMLHttpRequest创建目录成功: ${dirPath}`)
+        // console.log(`XMLHttpRequest创建目录成功: ${dirPath}`)
         return
       } else {
         throw new Error(`创建目录失败: 状态码 ${result.status}`)

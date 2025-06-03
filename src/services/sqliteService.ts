@@ -16,6 +16,11 @@ export interface Cards {
   next_review?: number;
 }
 
+export interface Record {
+  record_id: number;
+  avg_score: number;
+}
+
 export class SqliteService {
   private sqlite: SQLiteConnection;
   private db: SQLiteDBConnection | null = null;
@@ -31,12 +36,12 @@ export class SqliteService {
       if (this.db && (await this.db.isDBOpen()).result) {
         // Database opened.
       } else {
-        console.log('Database has not been initialized and opened.');
+        // console.log('Database has not been initialized and opened.');
         try {
           await CapacitorSQLite.closeConnection({ database: this.dbName });
-          console.log('Forced closing connection with knowledgeCards.');
+          // console.log('Forced closing connection with knowledgeCards.');
         } catch (error) {
-          console.log('No need or fail to close connection with knowledgeCards.', error);
+          // console.log('No need or fail to close connection with knowledgeCards.', error);
         }
         const db = await this.sqlite.createConnection(this.dbName, false, 'no-encryption', 1, false);
         await db.open();
@@ -62,8 +67,16 @@ export class SqliteService {
           );
         `;
 
+        const createRecord = `
+          CREATE TABLE IF NOT EXISTS \`Record\` (
+            record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            avg_score REAL
+          );
+        `;
+
         await db.execute(createGroup);
         await db.execute(createCards);
+        await db.execute(createRecord);
 
         const result = await db.query(`
           SELECT group_name FROM \`Group\` WHERE group_name = ?;
@@ -76,7 +89,7 @@ export class SqliteService {
 
         this.db = db;
       }
-      console.log('Database has been initialized and opened.');
+      // console.log('Database has been initialized and opened.');
     } catch (err) {
       console.error('Database initialize error:', err);
     }
@@ -102,7 +115,18 @@ export class SqliteService {
     if (!this.db) throw new Error('Database not initialized.');
     const result = await this.db.run(`
       INSERT INTO \`Cards\` (card_hash, group_id, question, answer, last_review, next_review) VALUES (?, ?, ?, ?, ?, ?);
-    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now() + 86400000]);
+    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now()]); // # 测试逻辑
+    // `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now() + 86400000]); // ! 正确逻辑
+    return { changes: result.changes?.changes || 0 };
+  }
+
+  // Save record
+  async saveRecord(record: number): Promise<{ changes: number }> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.run(`
+      INSERT INTO \`Record\` (avg_score) VALUES (?);
+    `, [record]);
     return { changes: result.changes?.changes || 0 };
   }
 
@@ -120,6 +144,14 @@ export class SqliteService {
     if (!this.db) throw new Error('Database not initialized.');
     const result = await this.db.query(`SELECT * FROM \`Cards\`;`);
     return result.values as Cards[];
+  }
+
+  // Get record
+  async getRecord(): Promise<Record[]> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`SELECT * FROM \`Record\`;`);
+    return result.values as Record[];
   }
 
   // Get review cards
@@ -194,14 +226,22 @@ export class SqliteService {
       UPDATE \`Cards\` SET card_hash = ?, group_id = ?, question = ?, answer = ?, last_review = ?, next_review = ?
       WHERE card_id = ?;
     `, [
+    //   await this.cardHash(cards.question, cards.answer ?? ""), 
+    //   cards.group_id, 
+    //   cards.question, 
+    //   cards.answer ?? "", 
+    //   cards.last_review ?? Date.now(), 
+    //   cards.next_review ?? (Date.now() + 86400000), 
+    //   cards.card_id ?? 0
+    // ]); // ! 正确逻辑
       await this.cardHash(cards.question, cards.answer ?? ""), 
       cards.group_id, 
       cards.question, 
       cards.answer ?? "", 
       cards.last_review ?? Date.now(), 
-      cards.next_review ?? (Date.now() + 86400000), 
+      cards.next_review ?? Date.now(), 
       cards.card_id ?? 0
-    ]);
+    ]); // # 测试逻辑
     return result.values?.[0];
   }
 
@@ -212,13 +252,14 @@ export class SqliteService {
     const info = await this.db.query(`
       SELECT last_review, next_review FROM \`Cards\` WHERE card_id = ?;
     `, [card_id]);
-    console.log('reviewCards function', info);
+    // console.log('reviewCards function', info);
     const time = (Date.now() - info.values?.[0]?.["last_review"]) * score;
-    console.log('Next gap time', time);
+    // console.log('Next gap time', time);
     const result = await this.db.query(`
       UPDATE \`Cards\` SET last_review = ?, next_review = ?
       WHERE card_id = ?;
-    `, [Date.now(), Date.now() + time, card_id]);
+    `, [Date.now(), Date.now(), card_id]); // # 测试逻辑
+    // `, [Date.now(), Date.now() + time, card_id]); // ! 正确逻辑
     return result.values?.[0];
   }
 

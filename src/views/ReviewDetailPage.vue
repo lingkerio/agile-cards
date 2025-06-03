@@ -19,7 +19,7 @@ interface Cards {
 }
 
 async function loadReviewCards() {
-  console.log('Attempting to load review card...');
+  // console.log('Attempting to load review card...');
   try {
     const reviewCards = await sqlite.getReviewCards();
     cards.value = await Promise.all(reviewCards.map(async card => ({
@@ -29,7 +29,7 @@ async function loadReviewCards() {
       question:   card.question,
       answer:     card.answer ?? ""
     })));
-    console.log('Review card loaded:', cards.value);
+    // console.log('Review card loaded:', cards.value);
     cardsNum.value = cards.value.length;
   } catch (error: any) {
     console.error('Failed to load review cards:', error);
@@ -38,19 +38,20 @@ async function loadReviewCards() {
 
 const cardsNum = ref<number>(0);
 const currentLable = ref<number>(0);
+const totalScore = ref<number>(0);
 
 onMounted(() => {
   document.title = 'Cards - Home Page';
-  console.log('Component mounted. Waiting for DB initialization...');
+  // console.log('Component mounted. Waiting for DB initialization...');
 
   watchEffect(async () => {
     if (appInit.isDbInitialized) {
-      console.log('DB is initialized, proceeding to load card groups.');
+      // console.log('DB is initialized, proceeding to load card groups.');
       await loadReviewCards();
     } else if (appInit.dbInitializationError) {
       console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
     } else {
-      console.log('DB not yet initialized, watchEffect is waiting...');
+      // console.log('DB not yet initialized, watchEffect is waiting...');
     }
   });
 });
@@ -58,14 +59,15 @@ onMounted(() => {
 const nextCard = async () => {
   if (selectScore.value === 0) {
     alert('请为该卡片的记忆情况打分！');
-    return;
   } else {
     await sqlite.reviewCards(cards.value[currentLable.value].card_id, selectScore.value);
+    totalScore.value += 2 * selectScore.value - 1;
     selectScore.value = 0;
     showAnswer.value = false;
     if (currentLable.value < cards.value.length - 1) {
       currentLable.value++;
     } else if (currentLable.value === cards.value.length - 1) {
+      await sqlite.saveRecord(totalScore.value / cardsNum.value);
       router.push('/review');
     }
   }

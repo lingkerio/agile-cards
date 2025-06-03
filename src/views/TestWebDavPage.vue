@@ -24,7 +24,7 @@ const webdavServerUrl = ref(CONFIG.WEBDAV_SERVER_URL || '未配置');
 // 日志函数
 function addLog(message: string) {
   logs.value.push(`[${new Date().toLocaleTimeString()}] ${message}`);
-  console.log(message);
+  // console.log(message);
 }
 
 // 测试WebDAV连接

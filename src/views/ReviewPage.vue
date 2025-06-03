@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watchEffect } from 'vue';
+import { ref, onMounted, watchEffect, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import TopBar from '@/components/TopBar.vue';
 import { SqliteService } from '@/services/sqliteService';
@@ -11,6 +11,12 @@ const sqlite = new SqliteService();
 const appInit = useAppInitStore(); 
 const cardsSngl = ref<Cards[]>([]);
 const cardsDual = ref<Cards[]>([]);
+const reviewRecords = ref<Record[]>([]);
+
+interface Record {
+  record_id: number;
+  avg_score: number;
+}
 
 interface Cards {
   card_id:    number;
@@ -21,10 +27,14 @@ interface Cards {
 }
 
 async function loadReviewCards() {
-  console.log('Attempting to load review card...');
+  // console.log('Attempting to load review card...');
   try {
     cardsSngl.value = [];
     cardsDual.value = [];
+    reviewRecords.value = (await sqlite.getRecord()).map(r => ({
+      record_id: r.record_id,
+      avg_score: r.avg_score
+    }));
     const reviewCards = await sqlite.getReviewCards();
     cards.value = await Promise.all(reviewCards.map(async card => ({
       card_id:    card.card_id ?? 0,
@@ -33,7 +43,7 @@ async function loadReviewCards() {
       question:   card.question,
       answer:     card.answer ?? ""
     })));
-    console.log('Review card loaded:', cards.value);
+    // console.log('Review card loaded:', cards.value);
     cards.value.forEach((item, i) => {
       if (i % 2 === 0) cardsSngl.value.push(item);
       else cardsDual.value.push(item);
@@ -48,19 +58,66 @@ const cardsNum = ref<number>(0);
 
 onMounted(() => {
   document.title = 'Cards - Home Page';
-  console.log('Component mounted. Waiting for DB initialization...');
+  // console.log('Component mounted. Waiting for DB initialization...');
+  renderChart();
 
   watchEffect(async () => {
     if (appInit.isDbInitialized) {
-      console.log('DB is initialized, proceeding to load card groups.');
+      // console.log('DB is initialized, proceeding to load card groups.');
       await loadReviewCards();
     } else if (appInit.dbInitializationError) {
       console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
     } else {
-      console.log('DB not yet initialized, watchEffect is waiting...');
+      // console.log('DB not yet initialized, watchEffect is waiting...');
     }
   });
 });
+
+watch(reviewRecords, () => {
+  renderChart()
+})
+
+import * as echarts from 'echarts';
+const chartRef = ref<HTMLDivElement | null>(null)
+let chart: echarts.ECharts | null = null
+
+function getChartData() {
+  const sorted = [...reviewRecords.value].sort((a, b) => a.record_id - b.record_id)
+  const last20 = sorted.slice(-7)
+  const xData = last20.map(item => item.record_id)
+  const yData = last20.map(item => item.avg_score)
+  return { xData, yData }
+}
+
+function renderChart() {
+  if (!chartRef.value) return
+  if (!chart) {
+    chart = echarts.init(chartRef.value)
+  }
+  const { xData, yData } = getChartData()
+  const option = {
+    title: { text: '最近 20 条记录折线图' },
+    tooltip: {},
+    xAxis: {
+      type: 'category',
+      data: xData,
+      name: 'record_id'
+    },
+    yAxis: {
+      type: 'value',
+      name: 'avg_score'
+    },
+    series: [
+      {
+        data: yData,
+        type: 'line',
+        smooth: true,
+        symbol: 'circle'
+      }
+    ]
+  }
+  chart.setOption(option)
+}
 </script>
 
 <template>
@@ -69,9 +126,9 @@ onMounted(() => {
 
     <div class="page-list">
       <div class="title">复习总结</div>
-
+      <div ref="chartRef" style="width: 300px; height: 200px;"></div>
       <div class="title">待复习</div>
-      <div class="await-review">
+      <div class="await-review" v-if="cards.length != 0">
         <div class="content-title">
           您有 <span style="color: #ffffff;"> {{ cards.length }} </span> 张卡片需要复习。
         </div>
@@ -91,6 +148,11 @@ onMounted(() => {
               <p>{{ card.answer ?? "" }}</p>
             </div>
           </div>
+        </div>
+      </div>
+      <div class="await-review" v-if="cards.length == 0">
+        <div class="content-title">
+          恭喜您，您已完成 <span style="color: #ffffff;"> 所有 </span> 卡片的复习！
         </div>
       </div>
     </div>

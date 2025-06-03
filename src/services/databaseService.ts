@@ -39,7 +39,7 @@ export class SqliteService {
 
       if (this.db) {
         await this.db.open()
-        console.log(`Successfully opened database: ${this.dbName}`)
+        // console.log(`Successfully opened database: ${this.dbName}`)
         await this.createTables()
         await this.insertInitialData()
       } else {
@@ -68,13 +68,13 @@ export class SqliteService {
     try {
       // 禁用外键约束，以便可以删除表（即使有引用）
       await this.db.execute('PRAGMA foreign_keys = OFF;')
-      console.log('Foreign keys temporarily disabled for reset.')
+      // console.log('Foreign keys temporarily disabled for reset.')
 
       // 删除所有表
       await this.db.execute('DROP TABLE IF EXISTS knowledge_cards;')
       await this.db.execute('DROP TABLE IF EXISTS knowledge_card_groups;')
       await this.db.execute('DROP TABLE IF EXISTS app_config;') // 新增：删除配置表
-      console.log('All tables dropped.')
+      // console.log('All tables dropped.')
 
       // 重新创建表
       await this.createTables()
@@ -84,7 +84,7 @@ export class SqliteService {
 
       // 重新启用外键约束
       await this.db.execute('PRAGMA foreign_keys = ON;')
-      console.log('Foreign keys re-enabled after reset.')
+      // console.log('Foreign keys re-enabled after reset.')
     } catch (e) {
       console.error('Error resetting database:', e)
       throw e
@@ -139,14 +139,14 @@ export class SqliteService {
     try {
       // 启用外键约束 (对于 SQLite 默认是关闭的)
       await this.db.execute('PRAGMA foreign_keys = ON;')
-      console.log('Foreign keys enabled.')
+      // console.log('Foreign keys enabled.')
 
       await this.db.execute(createGroupTableSQL)
-      console.log('Table knowledge_card_groups created or already exists.')
+      // console.log('Table knowledge_card_groups created or already exists.')
       await this.db.execute(createCardTableSQL)
-      console.log('Table knowledge_cards created or already exists.')
+      // console.log('Table knowledge_cards created or already exists.')
       await this.db.execute(createConfigTableSQL) // 新增：执行创建配置表的 SQL
-      console.log('Table app_config created or already exists.')
+      // console.log('Table app_config created or already exists.')
     } catch (e) {
       console.error('Error creating tables:', e)
       throw e
@@ -182,9 +182,9 @@ export class SqliteService {
           defaultGroup.title,
           defaultGroup.subtitle,
         ])
-        console.log('Default group inserted successfully.')
+        // console.log('Default group inserted successfully.')
       } else {
-        console.log('Default group already exists, skipping insertion.')
+        // console.log('Default group already exists, skipping insertion.')
       }
     } catch (e: any) {
       // 如果发生唯一性约束错误，可以忽略
@@ -243,7 +243,7 @@ export class SqliteService {
     } else {
       query += `;`
     }
-    console.log(`Executing query: ${query} with params: ${params.join(', ')}`)
+    // console.log(`Executing query: ${query} with params: ${params.join(', ')}`)
     const { values } = await this.db.query(query, params)
     return (values || []) as KnowledgeCard[]
   }
@@ -360,7 +360,7 @@ export class SqliteService {
 
     try {
       await this.db.run(updateSQL, params)
-      console.log(`Card ${cardId} review status updated successfully.`)
+      // console.log(`Card ${cardId} review status updated successfully.`)
     } catch (e) {
       console.error(`Error updating card ${cardId} review status:`, e)
       throw e
@@ -426,7 +426,7 @@ export class SqliteService {
     try {
       const { changes } = await this.db.run(insertSQL, params)
       if (changes && changes.lastId) {
-        console.log(`Added new card with ID: ${changes.lastId}`)
+        // console.log(`Added new card with ID: ${changes.lastId}`)
         return changes.lastId
       }
       throw new Error('Failed to add new card.')
@@ -456,7 +456,7 @@ export class SqliteService {
     if (changes && changes.changes === 0) {
       throw new Error(`Card with ID ${card.id} not found for update.`)
     }
-    console.log(`Card ${card.id} updated successfully.`)
+    // console.log(`Card ${card.id} updated successfully.`)
   }
 
   /**
@@ -471,7 +471,7 @@ export class SqliteService {
     if (changes && changes.changes === 0) {
       throw new Error(`Card with ID ${cardId} not found for deletion.`)
     }
-    console.log(`Card ${cardId} deleted successfully.`)
+    // console.log(`Card ${cardId} deleted successfully.`)
   }
 
   /**
@@ -487,7 +487,7 @@ export class SqliteService {
     const params = [group.title, group.subtitle || null]
     const { changes } = await this.db.run(insertSQL, params)
     if (changes && changes.lastId) {
-      console.log(`Added new group with ID: ${changes.lastId}`)
+      // console.log(`Added new group with ID: ${changes.lastId}`)
       return changes.lastId
     }
     throw new Error('Failed to add new group.')
@@ -513,7 +513,7 @@ export class SqliteService {
     if (changes && changes.changes === 0) {
       throw new Error(`Group with ID ${group.id} not found for update.`)
     }
-    console.log(`Group ${group.id} updated successfully.`)
+    // console.log(`Group ${group.id} updated successfully.`)
   }
 
   /**
@@ -531,7 +531,7 @@ export class SqliteService {
     if (changes && changes.changes === 0) {
       throw new Error(`Group with ID ${groupId} not found for deletion.`)
     }
-    console.log(`Group ${groupId} deleted successfully.`)
+    // console.log(`Group ${groupId} deleted successfully.`)
   }
 
   // --- 新增：配置项相关的增删改查 ---
@@ -562,7 +562,7 @@ export class SqliteService {
     const params = [key, value, value] // For ON CONFLICT DO UPDATE, value needs to be repeated
     try {
       await this.db.run(insertOrUpdateSQL, params)
-      console.log(`Configuration key '${key}' set successfully.`)
+      // console.log(`Configuration key '${key}' set successfully.`)
     } catch (e) {
       console.error(`Error setting config key '${key}':`, e)
       throw e
@@ -581,7 +581,7 @@ export class SqliteService {
     if (changes && changes.changes === 0) {
       throw new Error(`Config key '${key}' not found for deletion.`)
     }
-    console.log(`Configuration key '${key}' deleted successfully.`)
+    // console.log(`Configuration key '${key}' deleted successfully.`)
   }
 
   /**
@@ -634,7 +634,7 @@ export class SqliteService {
       }
       sqlExport += '\n'
 
-      console.log('Database exported to SQL successfully.')
+      // console.log('Database exported to SQL successfully.')
       return sqlExport
     } catch (e) {
       console.error('Error exporting database to SQL:', e)
@@ -688,7 +688,7 @@ export class SqliteService {
       // 重新插入默认分组（如果需要）
       await this.insertInitialData()
 
-      console.log('Database import complete.')
+      // console.log('Database import complete.')
     } catch (err) {
       console.error('Failed to import database:', err)
       throw err
@@ -705,7 +705,7 @@ export class SqliteService {
       await this.db.close()
       await this.sqlite.closeConnection(this.dbName, false)
       this.db = null
-      console.log(`Database ${this.dbName} closed.`)
+      // console.log(`Database ${this.dbName} closed.`)
     }
   }
 }
