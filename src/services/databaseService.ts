@@ -1,5 +1,15 @@
-import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection, type capTask } from '@capacitor-community/sqlite'
-import type { KnowledgeCard, KnowledgeCardGroup, ReviewScore } from './interfaces/database'
+import {
+  CapacitorSQLite,
+  SQLiteConnection,
+  SQLiteDBConnection,
+  type capTask,
+} from '@capacitor-community/sqlite'
+import type {
+  AppConfig,
+  KnowledgeCard,
+  KnowledgeCardGroup,
+  ReviewScore,
+} from './interfaces/database'
 
 export class SqliteService {
   private sqlite: SQLiteConnection
@@ -63,6 +73,7 @@ export class SqliteService {
       // 删除所有表
       await this.db.execute('DROP TABLE IF EXISTS knowledge_cards;')
       await this.db.execute('DROP TABLE IF EXISTS knowledge_card_groups;')
+      await this.db.execute('DROP TABLE IF EXISTS app_config;') // 新增：删除配置表
       console.log('All tables dropped.')
 
       // 重新创建表
@@ -116,6 +127,15 @@ export class SqliteService {
       );
     `
 
+    const createConfigTableSQL = `
+      CREATE TABLE IF NOT EXISTS app_config (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `
+
     try {
       // 启用外键约束 (对于 SQLite 默认是关闭的)
       await this.db.execute('PRAGMA foreign_keys = ON;')
@@ -125,6 +145,8 @@ export class SqliteService {
       console.log('Table knowledge_card_groups created or already exists.')
       await this.db.execute(createCardTableSQL)
       console.log('Table knowledge_cards created or already exists.')
+      await this.db.execute(createConfigTableSQL) // 新增：执行创建配置表的 SQL
+      console.log('Table app_config created or already exists.')
     } catch (e) {
       console.error('Error creating tables:', e)
       throw e
@@ -217,7 +239,7 @@ export class SqliteService {
     if (limit !== undefined && limit !== null) {
       // 确保 limit 不是 undefined 或 null
       query += ` LIMIT ?;`
-      params.push(limit.toString())
+      params.push(limit.toString()) // push number directly, the driver handles type conversion
     } else {
       query += `;`
     }
@@ -512,6 +534,56 @@ export class SqliteService {
     console.log(`Group ${groupId} deleted successfully.`)
   }
 
+  // --- 新增：配置项相关的增删改查 ---
+
+  /**
+   * 获取应用程序配置值
+   * @param key 配置项的键
+   * @returns Promise<string | undefined> 配置项的值，如果不存在则为 undefined
+   */
+  public async getConfig(key: string): Promise<string | undefined> {
+    if (!this.db) throw new Error('Database not initialized.')
+    const { values } = await this.db.query(`SELECT value FROM app_config WHERE key = ?;`, [key])
+    return values && values.length > 0 ? (values[0].value as string) : undefined
+  }
+
+  /**
+   * 设置或更新应用程序配置项
+   * @param key 配置项的键
+   * @param value 配置项的值
+   * @returns Promise<void>
+   */
+  public async setConfig(key: string, value: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized.')
+    const insertOrUpdateSQL = `
+      INSERT INTO app_config (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = CURRENT_TIMESTAMP;
+    `
+    const params = [key, value, value] // For ON CONFLICT DO UPDATE, value needs to be repeated
+    try {
+      await this.db.run(insertOrUpdateSQL, params)
+      console.log(`Configuration key '${key}' set successfully.`)
+    } catch (e) {
+      console.error(`Error setting config key '${key}':`, e)
+      throw e
+    }
+  }
+
+  /**
+   * 删除应用程序配置项
+   * @param key 要删除的配置项的键
+   * @returns Promise<void>
+   */
+  public async deleteConfig(key: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized.')
+    const deleteSQL = `DELETE FROM app_config WHERE key = ?;`
+    const { changes } = await this.db.run(deleteSQL, [key])
+    if (changes && changes.changes === 0) {
+      throw new Error(`Config key '${key}' not found for deletion.`)
+    }
+    console.log(`Configuration key '${key}' deleted successfully.`)
+  }
+
   /**
    * 导出所有数据为 SQL INSERT 语句字符串。
    * @returns Promise<string> 包含所有数据的 SQL INSERT 语句字符串。
@@ -548,6 +620,19 @@ export class SqliteService {
 
         sqlExport += `INSERT INTO knowledge_cards (id, question, answer, group_id, last_reviewed_at, next_review_at, easiness_factor, repetitions, interval, status) VALUES (${card.id}, '${question}', '${answer}', ${groupId}, ${lastReviewedAt}, ${nextReviewAt}, ${card.easiness_factor}, ${card.repetitions}, ${card.interval}, ${status});\n`
       }
+      sqlExport += '\n'
+
+      // 新增：导出应用程序配置
+      const { values: configEntries } = await this.db.query(
+        `SELECT * FROM app_config ORDER BY key ASC;`,
+      )
+      sqlExport += `-- app_config data\n`
+      for (const config of configEntries as AppConfig[]) {
+        const key = config.key.replace(/'/g, "''")
+        const value = config.value.replace(/'/g, "''")
+        sqlExport += `INSERT INTO app_config (key, value) VALUES ('${key}', '${value}');\n`
+      }
+      sqlExport += '\n'
 
       console.log('Database exported to SQL successfully.')
       return sqlExport
@@ -573,11 +658,14 @@ export class SqliteService {
       const tasks: capTask[] = []
 
       // 清空现有数据
-      tasks.push({ statement: 'DELETE FROM knowledge_cards' })
-      tasks.push({ statement: 'DELETE FROM knowledge_card_groups' })
-      tasks.push({ statement: "UPDATE sqlite_sequence SET seq = 0 WHERE name = 'knowledge_cards'" })
+      tasks.push({ statement: 'DELETE FROM knowledge_cards;' })
+      tasks.push({ statement: 'DELETE FROM knowledge_card_groups;' })
+      tasks.push({ statement: 'DELETE FROM app_config;' }) // 新增：清空配置表
       tasks.push({
-        statement: "UPDATE sqlite_sequence SET seq = 0 WHERE name = 'knowledge_card_groups'",
+        statement: "UPDATE sqlite_sequence SET seq = 0 WHERE name = 'knowledge_cards';",
+      })
+      tasks.push({
+        statement: "UPDATE sqlite_sequence SET seq = 0 WHERE name = 'knowledge_card_groups';",
       })
 
       // 拆解 sqlString 插入语句（去除注释和空语句）
