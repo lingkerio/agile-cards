@@ -7,6 +7,7 @@ import TestSQLitePage from '@/views/TestSQLitePage.vue'
 import AddChoosePage from '@/views/AddChoosePage.vue'
 import AddGroupPage from '@/views/AddGroupPage.vue'
 import AddCardsPage from '@/views/AddCardsPage.vue'
+import ReviewPage from '@/views/ReviewPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,7 +35,7 @@ const router = createRouter({
     {
       path: '/review',
       name: 'review',
-      component: TestSQLitePage,
+      component: ReviewPage,
     },
     {
       path: '/settings',

@@ -1,11 +1,10 @@
-// Your Vue Component <script setup lang="ts">
+<script setup lang="ts">
 import { ref, onMounted, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import TopBar from '@/components/TopBar.vue';
 import CardView from '@/components/CardView.vue';
 import AddButton from '@/components/AddButton.vue';
 import { SqliteService } from '@/services/sqliteService';
-import placeholderImage from '@/assets/images/placeholder.jpg';
 import { useAppInitStore } from '@/stores/appInitStore'; // 导入 store
 import { groupIMG } from '@/services/placeholder';
 

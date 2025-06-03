@@ -122,6 +122,16 @@ export class SqliteService {
     return result.values as Cards[];
   }
 
+  // Get review cards
+  async getReviewCards(): Promise<Cards[]> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`
+      SELECT * FROM \`Cards\` WHERE next_review < ?
+    `, [Date.now()]);
+    return result.values as Cards[];
+  }
+
   // Get group by id
   async getGroupByID(id: number): Promise<Group[]> {
     if (!this.db) await this.initDB();
