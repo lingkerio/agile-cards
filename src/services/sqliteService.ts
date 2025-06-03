@@ -12,7 +12,8 @@ export interface Cards {
   group_id:     number;
   question:     string;
   answer?:      string;
-  reviewed_at?: number;
+  last_review?: number;
+  next_review?: number;
 }
 
 export class SqliteService {
@@ -55,7 +56,8 @@ export class SqliteService {
             group_id    INTEGER NOT NULL,
             question    TEXT    NOT NULL,
             answer      TEXT    NOT NULL,
-            reviewed_at INTEGER NOT NULL,
+            last_review INTEGER NOT NULL,
+            next_review INTEGER NOT NULL,
             FOREIGN KEY (group_id) REFERENCES \`Group\` (group_id)
           );
         `;
@@ -99,8 +101,8 @@ export class SqliteService {
     if (!this.db) await this.initDB();
     if (!this.db) throw new Error('Database not initialized.');
     const result = await this.db.run(`
-      INSERT INTO \`Cards\` (card_hash, group_id, question, answer, reviewed_at) VALUES (?, ?, ?, ?, ?);
-    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now()]);
+      INSERT INTO \`Cards\` (card_hash, group_id, question, answer, last_review, next_review) VALUES (?, ?, ?, ?, ?, ?);
+    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now()]);
     return { changes: result.changes?.changes || 0 };
   }
 
@@ -171,6 +173,17 @@ export class SqliteService {
       UPDATE \`Group\` SET group_name = ?, group_dis = ?
       WHERE group_id = ? AND group_name != ?;
     `, [group.group_name, group.group_dis ?? "", group.group_id, '默认']);
+    return result.values?.[0];
+  }
+
+  // Update cards of id
+  async updateCardsOfID(cards: Cards): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`
+      UPDATE \`Cards\` SET card_hash = ?, group_id = ?, question = ?, answer = ?, last_review = ?, next_review = ?
+      WHERE card_id = ?;
+    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", cards.last_review ?? Date.now(), cards.next_review ?? Date.now(), cards.card_id ?? 0]);
     return result.values?.[0];
   }
 

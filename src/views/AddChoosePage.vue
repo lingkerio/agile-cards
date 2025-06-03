@@ -16,9 +16,9 @@ const jumpAddCards = () => {
 
 <template>
   <div class="add-choose-page">
-    <div class="return-button" @click="router.back()">< 返回</div>
     <div class="form-container">
       <h1>选择添加类型</h1>
+      <div class="return-button" @click="router.back()">< 返回</div>
       <button @click="jumpAddGroup" class="add-button">添加卡片组</button>
       <button @click="jumpAddCards" class="add-button">添加卡片</button>
     </div>
@@ -28,8 +28,8 @@ const jumpAddCards = () => {
 <style scoped>
 .return-button {
   position: absolute;
-  left: 25px;
-  top: 45px;
+  left: 5px;
+  top: 5px;
   background-color: #353535;
   padding: 5px 10px;
   border-radius: 10px;
@@ -53,6 +53,7 @@ const jumpAddCards = () => {
 }
 
 .form-container {
+  position: relative;
   width: 100%;
   max-width: 500px;
   display: flex;

@@ -249,7 +249,7 @@ const jumpGroup = (group_name: string) => {
       <div style="width: 90%; margin: 0 auto;">
         <div class="search-container">
           <div class="input-wrapper">
-            <input v-model="searchQuery" type="text" placeholder="Search cards..." class="search-input" />
+            <input v-model="searchQuery" type="text" placeholder="搜索卡片或卡片组..." class="search-input" />
             <button v-if="searchQuery" class="clear-button" @click="clearSearch">
               ×
             </button>
@@ -264,7 +264,7 @@ const jumpGroup = (group_name: string) => {
         <div v-if="isSearchGroup" class="group-control">
           <div class="group-control-wrapper">
             <p class="group-remind">卡片组：{{ searchGroup?.title }}</p>
-            <div class="group-control-fix" @click="changeIsFix" :class="{ active: isFix }">修改</div>
+            <div class="group-control-fix" @click="changeIsFix" :class="{ active: isFix }">编辑</div>
             <div class="group-control-del" @click="submitDel">删除</div>
           </div>
           <p class="group-control-description">卡片组描述：{{ searchGroup?.description || "无描述..." }}</p>

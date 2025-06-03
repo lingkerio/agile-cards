@@ -104,6 +104,7 @@ onMounted(() => {
           v-for="(group, index) in cardGroups"
           :key="group.id"
           :class="['dot', { active: index === currentIndex }]"
+          @click="currentIndex = index"
         ></span>
       </div>
     </div>
@@ -187,13 +188,14 @@ onMounted(() => {
 .dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 4px;
   background-color: #555;
   transition: background-color 0.15s ease;
 }
 
 .dot.active {
   background-color: #107c10;
+  width: 20px;
 }
 
 /* 过渡动画 */

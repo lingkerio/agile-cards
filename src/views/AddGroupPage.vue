@@ -35,10 +35,10 @@ const handleSubmit = async () => {
 
 <template>
   <div class="add-card-group-page">
-    <div class="return-button" @click="router.back()">< 返回</div>
     <div class="form-container">
       <h1>添加卡片组</h1>
-
+      
+      <div class="return-button" @click="router.back()">< 返回</div>
       <input v-model="title" placeholder="请输入卡片组名称" class="input" />
 
       <textarea
@@ -56,8 +56,8 @@ const handleSubmit = async () => {
 <style scoped>
 .return-button {
   position: absolute;
-  left: 25px;
-  top: 45px;
+  left: 5px;
+  top: 5px;
   background-color: #353535;
   padding: 5px 10px;
   border-radius: 10px;
@@ -81,6 +81,7 @@ const handleSubmit = async () => {
 }
 
 .form-container {
+  position: relative;
   width: 100%;
   max-width: 500px;
   display: flex;
