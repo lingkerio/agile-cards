@@ -8,7 +8,7 @@ import { useAppInitStore } from '@/stores/appInitStore'; // 导入 store
 const router = useRouter();
 const cards = ref<Cards[]>([]);
 const sqlite = new SqliteService();
-const appInit = useAppInitStore(); 
+const appInit = useAppInitStore();
 const cardsSngl = ref<Cards[]>([]);
 const cardsDual = ref<Cards[]>([]);
 const reviewRecords = ref<Record[]>([]);
@@ -19,11 +19,11 @@ interface Record {
 }
 
 interface Cards {
-  card_id:    number;
-  group_id:   number;
+  card_id: number;
+  group_id: number;
   group_name: string;
-  question:   string;
-  answer:     string;
+  question: string;
+  answer: string;
 }
 
 async function loadReviewCards() {
@@ -37,11 +37,11 @@ async function loadReviewCards() {
     }));
     const reviewCards = await sqlite.getReviewCards();
     cards.value = await Promise.all(reviewCards.map(async card => ({
-      card_id:    card.card_id ?? 0,
-      group_id:   card.group_id,
+      card_id: card.card_id ?? 0,
+      group_id: card.group_id,
       group_name: (await sqlite.getGroupByID(card.group_id))?.[0]?.group_name,
-      question:   card.question,
-      answer:     card.answer ?? ""
+      question: card.question,
+      answer: card.answer ?? ""
     })));
     // console.log('Review card loaded:', cards.value);
     cards.value.forEach((item, i) => {
@@ -51,7 +51,7 @@ async function loadReviewCards() {
     cardsNum.value = await sqlite.getCardsNum();
   } catch (error: any) {
     console.error('Failed to load review cards:', error);
-  } 
+  }
 }
 
 const cardsNum = ref<number>(0);
@@ -122,7 +122,7 @@ function renderChart() {
 
 <template>
   <div class="home-page">
-    <TopBar :info="'复习'" :status="cards.length + ' 张卡片待复习'" :card_num="cardsNum"/>
+    <TopBar :info="'复习'" :status="cards.length + ' 张卡片待复习'" :card_num="cardsNum" />
 
     <div class="page-list">
       <div class="title">复习总结</div>
@@ -135,15 +135,19 @@ function renderChart() {
         <div class="review-btn" @click="router.push('/review/detail')">开始复习</div>
         <div class="review-cards">
           <div class="review-cards-column">
-            <div v-for="card in cardsSngl" :key="card.card_id" class="review-card" @click="router.push(`/lib/cards/${card.card_id}`)">
-              <div class="group-label" @click.stop="router.push(`/lib/groups/group::${card.group_name}`)">{{ card.group_name }}</div>
+            <div v-for="card in cardsSngl" :key="card.card_id" class="review-card"
+              @click="router.push(`/lib/cards/${card.card_id}`)">
+              <div class="group-label" @click.stop="router.push(`/lib/groups/group::${card.group_name}`)">{{
+                card.group_name }}</div>
               <h4>{{ card.question }}</h4>
               <p>{{ card.answer ?? "" }}</p>
             </div>
           </div>
           <div class="review-cards-column">
-            <div v-for="card in cardsDual" :key="card.card_id" class="review-card" @click="router.push(`/lib/cards/${card.card_id}`)">
-              <div class="group-label" @click.stop="router.push(`/lib/groups/group::${card.group_name}`)">{{ card.group_name }}</div>
+            <div v-for="card in cardsDual" :key="card.card_id" class="review-card"
+              @click="router.push(`/lib/cards/${card.card_id}`)">
+              <div class="group-label" @click.stop="router.push(`/lib/groups/group::${card.group_name}`)">{{
+                card.group_name }}</div>
               <h4>{{ card.question }}</h4>
               <p>{{ card.answer ?? "" }}</p>
             </div>
@@ -167,8 +171,8 @@ function renderChart() {
   padding: 7px;
   text-align: center;
   white-space: nowrap;
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: bold;
   border-radius: 10px;
   transition: color 0.15s;
@@ -181,16 +185,16 @@ function renderChart() {
 .review-card p,
 .review-card h4 {
   white-space: nowrap;
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin-top: 5px;
 }
 
 .review-card {
   padding: 10px;
   border-radius: 10px;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
-  border-radius: 12px; 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
   background-color: #303030;
 }
 
@@ -258,10 +262,10 @@ function renderChart() {
 .title {
   height: 8vh;
   margin-bottom: 0;
-  font-size: 4vh; 
-  font-weight: 500;    
-  padding-left: 5vw;  
-  text-align: left;    
+  font-size: 4vh;
+  font-weight: 500;
+  padding-left: 5vw;
+  text-align: left;
 }
 
 .card-list h1 {
@@ -333,6 +337,7 @@ function renderChart() {
 .fade-leave-active {
   transition: opacity 0.15s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;

@@ -118,30 +118,30 @@ const addNewTestCard = async () => {
  * 删除最后一张卡片
  */
 const deleteTestCard = async () => {
-  try {
-    // 查询最后一张卡片的 ID
-    const { values: lastCard } = await sqliteService.db?.query(
-      `SELECT id FROM knowledge_cards ORDER BY id DESC LIMIT 1`
-    );
+  // try {
+  //   // 查询最后一张卡片的 ID
+  //   const { values: lastCard } = await sqliteService.db?.query(
+  //     `SELECT id FROM knowledge_cards ORDER BY id DESC LIMIT 1`
+  //   );
 
-    if (lastCard && lastCard.length > 0) {
-      const cardIdToDelete = lastCard[0].id; // 获取最后一张卡片的 ID
-      await sqliteService.deleteCard(cardIdToDelete);
-      message.value = `卡片 ID ${cardIdToDelete} 删除成功。`;
-      // console.log(`卡片 ${cardIdToDelete} 删除成功。`);
+  //   if (lastCard && lastCard.length > 0) {
+  //     const cardIdToDelete = lastCard[0].id; // 获取最后一张卡片的 ID
+  //     await sqliteService.deleteCard(cardIdToDelete);
+  //     message.value = `卡片 ID ${cardIdToDelete} 删除成功。`;
+  //     // console.log(`卡片 ${cardIdToDelete} 删除成功。`);
 
-      // 如果删除了当前显示的卡片，清空当前卡片
-      if (currentCard.value && currentCard.value.id === cardIdToDelete) {
-        currentCard.value = null;
-      }
-    } else {
-      message.value = '没有卡片可删除。';
-      // console.log('没有卡片可删除。');
-    }
-  } catch (e: any) {
-    message.value = `删除卡片失败: ${e.message}`;
-    console.error('删除卡片失败:', e);
-  }
+  //     // 如果删除了当前显示的卡片，清空当前卡片
+  //     if (currentCard.value && currentCard.value.id === cardIdToDelete) {
+  //       currentCard.value = null;
+  //     }
+  //   } else {
+  //     message.value = '没有卡片可删除。';
+  //     // console.log('没有卡片可删除。');
+  //   }
+  // } catch (e: any) {
+  //   message.value = `删除卡片失败: ${e.message}`;
+  //   console.error('删除卡片失败:', e);
+  // }
 };
 
 /**
@@ -225,7 +225,8 @@ const importDatabase = async () => {
     <div v-if="currentCard">
       <h3>问题: {{ currentCard.question }}</h3>
       <p>答案: {{ currentCard.answer }}</p>
-      <p>状态: {{ currentCard.status }} | E-Factor: {{ currentCard.easiness_factor.toFixed(2) }} | 复习次数: {{ currentCard.repetitions }} | 间隔: {{ currentCard.interval }}天</p>
+      <p>状态: {{ currentCard.status }} | E-Factor: {{ currentCard.easiness_factor.toFixed(2) }} | 复习次数: {{
+        currentCard.repetitions }} | 间隔: {{ currentCard.interval }}天</p>
       <p>下次复习: {{ currentCard.next_review_at ? new Date(currentCard.next_review_at).toLocaleString() : 'N/A' }}</p>
       <div style="margin-top: 10px;">
         <button @click="reviewCard(5)" style="background-color: green;">评分 5 (完美)</button>
@@ -293,10 +294,12 @@ button:hover {
 button[style*="background-color: green"] {
   background-color: #28a745;
 }
+
 button[style*="background-color: orange"] {
   background-color: #ffc107;
   color: black;
 }
+
 button[style*="background-color: red"] {
   background-color: #dc3545;
 }

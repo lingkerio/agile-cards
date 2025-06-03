@@ -27,14 +27,14 @@ async function loadCardGroups() {
     const groups = await sqlite.getGroup();
     // console.log('Card groups loaded:', groups);
     cardGroups.value = groups.map(group => ({
-      id:       group.group_id ?? 0,
-      title:    group.group_name,
+      id: group.group_id ?? 0,
+      title: group.group_name,
       subtitle: group.group_dis ?? ""
     }));
     cardsNum.value = await sqlite.getCardsNum();
   } catch (error: any) {
     console.error('Failed to load card groups:', error);
-  } 
+  }
 }
 
 const handleAddClick = () => {
@@ -74,7 +74,7 @@ onMounted(() => {
 
 <template>
   <div class="home-page">
-    <TopBar :info="'电脑玩家'" :status="'在线'" :card_num="cardsNum"/>
+    <TopBar :info="'电脑玩家'" :status="'在线'" :card_num="cardsNum" />
 
     <div class="card-list">
       <div class="title">卡片组列表</div>
@@ -84,13 +84,8 @@ onMounted(() => {
 
         <transition name="fade" mode="out-in">
           <div class="card-wrapper" :key="cardGroups[currentIndex].id">
-            <CardView
-              :title="cardGroups[currentIndex].title"
-              :subtitle="cardGroups[currentIndex].subtitle"
-              :image="groupImg[currentIndex]"
-              :id="cardGroups[currentIndex].id"
-              class="card-item"
-            />
+            <CardView :title="cardGroups[currentIndex].title" :subtitle="cardGroups[currentIndex].subtitle"
+              :image="groupImg[currentIndex]" :id="cardGroups[currentIndex].id" class="card-item" />
           </div>
         </transition>
 
@@ -99,12 +94,8 @@ onMounted(() => {
 
       <!-- 分页圆点指示器 -->
       <div class="pagination-dots" v-if="cardGroups.length > 1">
-        <span
-          v-for="(group, index) in cardGroups"
-          :key="group.id"
-          :class="['dot', { active: index === currentIndex }]"
-          @click="currentIndex = index"
-        ></span>
+        <span v-for="(group, index) in cardGroups" :key="group.id" :class="['dot', { active: index === currentIndex }]"
+          @click="currentIndex = index"></span>
       </div>
     </div>
 
@@ -127,10 +118,10 @@ onMounted(() => {
 .title {
   height: 8vh;
   margin-bottom: 0;
-  font-size: 4vh; 
-  font-weight: 500;    
-  padding-left: 5vw;  
-  text-align: left;    
+  font-size: 4vh;
+  font-weight: 500;
+  padding-left: 5vw;
+  text-align: left;
 }
 
 .card-list h1 {
@@ -202,6 +193,7 @@ onMounted(() => {
 .fade-leave-active {
   transition: opacity 0.15s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;

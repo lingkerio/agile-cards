@@ -141,7 +141,7 @@ const resetAll = () => {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 40px 20px 100px; 
+  padding: 40px 20px 100px;
   box-sizing: border-box;
 }
 
@@ -154,7 +154,8 @@ const resetAll = () => {
   gap: 20px;
 }
 
-h1, h2 {
+h1,
+h2 {
   font-size: 22px;
   font-weight: bold;
   text-align: center;

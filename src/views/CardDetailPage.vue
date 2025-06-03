@@ -24,7 +24,7 @@ const handleDel = async () => {
   if (window.confirm("确认要删除该卡片吗？")) {
     await sqlite.dropCardsByID(Number(props.card_id));
     router.push('/lib');
-  } 
+  }
 }
 
 const loadEverything = async () => {
@@ -55,10 +55,10 @@ const handleClick = (id: number) => {
 
 const submitFix = async () => {
   const submitCardInfo: Cards = {
-    card_id:  Number(props.card_id),
+    card_id: Number(props.card_id),
     group_id: currentLable.value,
     question: question.value,
-    answer:   answer.value
+    answer: answer.value
   }
   await sqlite.updateCardsOfID(submitCardInfo);
   await loadEverything();
@@ -72,42 +72,39 @@ const submitFix = async () => {
       <div class="title-container">
         <h1>卡片内容</h1>
         <h2>卡片组：{{ group_nameReal }}</h2>
-        <div class="return-button" @click="router.back()">< 返回</div>
-        <div class="delete-card" @click="handleDel">删除</div>
-        <div class="fix-card" :class="{ active: isFix }" @click="changeFixStatus">编辑</div>
-      </div>
-
-      <div class="input">
-        <p class="title">问题</p>
-        <p v-if="!isFix" class="content">{{ questionReal }}</p>
-        <textarea v-if="isFix" v-model="question" class="textarea-format"></textarea>
-      </div>
-
-      <div class="textarea">
-        <p class="title">答案</p>
-        <p v-if="!isFix" class="content">{{ answerReal }}</p>
-        <textarea v-if="isFix" v-model="answer" class="textarea-format"></textarea>
-      </div>
-
-      <transition name="fade">
-        <div v-if="isFix" class="group-select">
-          <p class="select-remind">选择卡片组</p>
-          <div 
-            class="group-label" 
-            :class="{ active: currentLable === g.group_id }"
-            v-for="g in groupSqlite" 
-            @click="handleClick(g.group_id ?? 0)"
-          >
-            {{ g.group_name }}
-          </div>
+        <div class="return-button" @click="router.back()">
+          < 返回</div>
+            <div class="delete-card" @click="handleDel">删除</div>
+            <div class="fix-card" :class="{ active: isFix }" @click="changeFixStatus">编辑</div>
         </div>
-      </transition>
 
-      <transition name="fade">
-        <button v-if="isFix" @click="submitFix" class="submit-btn">确认修改</button>
-      </transition>
+        <div class="input">
+          <p class="title">问题</p>
+          <p v-if="!isFix" class="content">{{ questionReal }}</p>
+          <textarea v-if="isFix" v-model="question" class="textarea-format"></textarea>
+        </div>
+
+        <div class="textarea">
+          <p class="title">答案</p>
+          <p v-if="!isFix" class="content">{{ answerReal }}</p>
+          <textarea v-if="isFix" v-model="answer" class="textarea-format"></textarea>
+        </div>
+
+        <transition name="fade">
+          <div v-if="isFix" class="group-select">
+            <p class="select-remind">选择卡片组</p>
+            <div class="group-label" :class="{ active: currentLable === g.group_id }" v-for="g in groupSqlite"
+              @click="handleClick(g.group_id ?? 0)">
+              {{ g.group_name }}
+            </div>
+          </div>
+        </transition>
+
+        <transition name="fade">
+          <button v-if="isFix" @click="submitFix" class="submit-btn">确认修改</button>
+        </transition>
+      </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
@@ -141,25 +138,27 @@ const submitFix = async () => {
   flex-wrap: nowrap;
   white-space: nowrap;
   padding: 10px;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
-  border-radius: 12px; 
-  background: #222222;   
-  scrollbar-width: none; 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  background: #222222;
+  scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .group-select::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
 
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.15s ease-in-out;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
+
 .fade-enter-to,
 .fade-leave-from {
   opacity: 1;
@@ -276,7 +275,7 @@ h2 {
   border-radius: 10px;
   background-color: #222222;
   color: white;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
   transition: border 0.15s;
 }
 
@@ -289,7 +288,7 @@ h2 {
   background-color: #222222;
   color: white;
   transition: border 0.15s;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 

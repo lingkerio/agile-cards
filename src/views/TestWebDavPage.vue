@@ -31,15 +31,15 @@ function addLog(message: string) {
 async function testWebDavConnection() {
   try {
     addLog('开始测试WebDAV连接...');
-    
+
     // 测试WebDAV连接
     const testContent = `测试连接 ${new Date().toISOString()}`;
     const testPath = '/test-connection.txt';
-    
+
     addLog(`尝试上传测试文件到: ${testPath}`);
     await webdavService.uploadFileToWebDAV(testContent, testPath);
     addLog('WebDAV连接测试成功! 服务器可正常访问。');
-    
+
     showSuccess('WebDAV连接测试成功!');
   } catch (error) {
     addLog(`WebDAV连接测试失败: ${error instanceof Error ? error.message : String(error)}`);
@@ -50,17 +50,17 @@ async function testWebDavConnection() {
 async function initDatabase() {
   try {
     addLog('开始初始化数据库...');
-    
+
     // 检查平台
     if (Capacitor.getPlatform() === 'web') {
       addLog('在Web平台上不支持SQLite数据库操作，请在Android/iOS设备上使用此功能');
       return;
     }
-    
+
     await databaseService.init();
     isInitialized.value = true;
     addLog('数据库初始化成功');
-    
+
     // 添加一些测试数据
     await addTestData();
   } catch (error) {
@@ -72,19 +72,19 @@ async function initDatabase() {
 async function addTestData() {
   try {
     addLog('开始添加测试数据...');
-    
+
     // 添加一个测试分组
     const groupResult = await databaseService.saveGroup({
       group_name: '测试分组' + new Date().getTime()
     });
-    
+
     if (groupResult.changes > 0) {
       addLog('测试分组添加成功');
-      
+
       // 获取所有分组以找到我们刚刚添加的分组
       const groups = await databaseService.getGroups();
       const latestGroup = groups[groups.length - 1];
-      
+
       // 添加一张测试卡片
       const cardResult = await databaseService.saveCard({
         group_id: latestGroup.group_id!,
@@ -93,7 +93,7 @@ async function addTestData() {
         created_at: Date.now(),
         last_reviewed_at: Date.now()
       });
-      
+
       if (cardResult.changes > 0) {
         addLog('测试卡片添加成功');
       }
@@ -107,14 +107,14 @@ async function addTestData() {
 async function uploadDatabase() {
   try {
     isUploading.value = true;
-    
+
     // 确保路径格式正确
     const formattedPath = formatPath(remotePath.value);
-    
+
     addLog(`开始上传数据库到WebDAV: ${formattedPath}`);
     await webdavService.uploadDatabaseToWebDAV(dbName.value, formattedPath);
     addLog('数据库上传成功');
-    
+
     showSuccess('数据库上传成功!');
   } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -128,12 +128,12 @@ async function uploadDatabase() {
 async function downloadDatabase() {
   try {
     isDownloading.value = true;
-    
+
     // 确保路径格式正确
     const formattedPath = formatPath(remotePath.value);
-    
+
     addLog(`开始从WebDAV下载数据库: ${formattedPath} -> ${dbName.value} (覆盖)`);
-    
+
     // 需要先关闭数据库连接
     if (databaseService.db) {
       const isOpen = await databaseService.db.isDBOpen();
@@ -144,20 +144,20 @@ async function downloadDatabase() {
         addLog('数据库连接已关闭');
       }
     }
-    
+
     // 下载并导入数据，直接覆盖原始数据库
     await webdavService.downloadDatabaseFromWebDAV(formattedPath, dbName.value);
     addLog(`数据库下载成功，已覆盖: ${dbName.value}`);
-    
+
     // 重新初始化数据库连接
     addLog('重新初始化数据库连接...');
     await databaseService.init();
     addLog('数据库连接已重新建立');
-    
+
     showSuccess('数据库下载并覆盖成功!');
   } catch (error) {
     addLog(`下载数据库失败: ${error instanceof Error ? error.message : String(error)}`);
-    
+
     // 出错后也尝试重新初始化数据库连接
     try {
       addLog('尝试在错误处理中重新初始化数据库连接...');
@@ -201,32 +201,22 @@ onMounted(() => {
 <template>
   <div class="test-webdav-page">
     <TopBar info="WebDAV 测试" status="" />
-    
+
     <div class="container">
       <div class="card test-controls">
         <h2>WebDAV数据库同步</h2>
-        
+
         <div class="form-group">
           <label for="remotePath">远程路径:</label>
-          <input 
-            id="remotePath" 
-            v-model="remotePath" 
-            type="text" 
-            placeholder="例如: /backup/knowledgeCardsDB.json"
-          />
+          <input id="remotePath" v-model="remotePath" type="text" placeholder="例如: /backup/knowledgeCardsDB.json" />
           <div class="help-text">确保以斜杠开始，如: /backup/database.json</div>
         </div>
-        
+
         <div class="form-group">
           <label for="dbName">数据库名称:</label>
-          <input 
-            id="dbName" 
-            v-model="dbName" 
-            type="text" 
-            placeholder="例如: knowledgeCardsDB"
-          />
+          <input id="dbName" v-model="dbName" type="text" placeholder="例如: knowledgeCardsDB" />
         </div>
-        
+
         <div class="notice-box">
           <div class="notice-icon">ℹ️</div>
           <div class="notice-text">
@@ -239,42 +229,27 @@ onMounted(() => {
           <div>连接模式: 绝对URL + XMLHttpRequest</div>
           <div>数据格式: JSON格式</div>
         </div>
-        
+
         <div class="btn-group">
-          <button 
-            @click="testWebDavConnection" 
-            :disabled="isUploading || isDownloading"
-            class="btn btn-secondary"
-          >
+          <button @click="testWebDavConnection" :disabled="isUploading || isDownloading" class="btn btn-secondary">
             测试连接
           </button>
-          
-          <button 
-            @click="initDatabase" 
-            :disabled="isUploading || isDownloading"
-            class="btn btn-primary"
-          >
+
+          <button @click="initDatabase" :disabled="isUploading || isDownloading" class="btn btn-primary">
             1. 初始化数据库
           </button>
-          
-          <button 
-            @click="uploadDatabase" 
-            :disabled="!isInitialized || isUploading || isDownloading"
-            class="btn btn-success"
-          >
+
+          <button @click="uploadDatabase" :disabled="!isInitialized || isUploading || isDownloading"
+            class="btn btn-success">
             {{ isUploading ? '上传中...' : '2. 上传数据库' }}
           </button>
-          
-          <button 
-            @click="downloadDatabase" 
-            :disabled="isUploading || isDownloading"
-            class="btn btn-danger"
-          >
+
+          <button @click="downloadDatabase" :disabled="isUploading || isDownloading" class="btn btn-danger">
             {{ isDownloading ? '下载中...' : '3. 下载并覆盖' }}
           </button>
         </div>
       </div>
-      
+
       <div class="card logs-panel">
         <h2>操作日志</h2>
         <div class="logs">
@@ -287,7 +262,7 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    
+
     <div class="success-message" v-if="showSuccessMessage">
       <div class="success-content">
         <span class="success-icon">✓</span>

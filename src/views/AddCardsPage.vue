@@ -33,7 +33,7 @@ const handleAddCard = async () => {
   if (!question.value.trim()) {
     alert('问题不能为空!');
     return;
-  } 
+  }
   if (currentLable.value == 0) {
     alert('请选择卡片所在的卡片组!');
     return;
@@ -71,46 +71,33 @@ onMounted(async () => {
   <div class="add-card-group-page">
     <div class="form-container">
       <h1>添加卡片</h1>
-      
-      <div class="return-button" @click="router.back()">< 返回</div>
-      <input v-model="question" placeholder="请输入卡片问题" class="input" />
 
-      <textarea
-        v-model="answer"
-        placeholder="请输入卡片答案"
-        class="textarea"
-        rows="8"
-      ></textarea>
+      <div class="return-button" @click="router.back()">
+        < 返回</div>
+          <input v-model="question" placeholder="请输入卡片问题" class="input" />
 
-      <div class="group-select">
-        <p class="select-remind">选择卡片组</p>
-        <div 
-          class="group-label" 
-          :class="{ active: currentLable === g.group_id }"
-          v-for="g in group" 
-          @click="handleClick(g.group_id ?? 0)"
-        >
-          {{ g.group_name }}
-        </div>
-      </div>
+          <textarea v-model="answer" placeholder="请输入卡片答案" class="textarea" rows="8"></textarea>
 
-      <div class="textarea-container">
-        <textarea
-          v-model="llm_content"
-          placeholder="使用大模型自动生成卡片"
-          class="textarea"
-          rows="8"
-        ></textarea>
-        <div class="llm-submit-wrapper">
-          <div class="llm-submit">
-            大模型提取
+          <div class="group-select">
+            <p class="select-remind">选择卡片组</p>
+            <div class="group-label" :class="{ active: currentLable === g.group_id }" v-for="g in group"
+              @click="handleClick(g.group_id ?? 0)">
+              {{ g.group_name }}
+            </div>
           </div>
-        </div>
-      </div>
 
-      <button @click="handleAddCard" class="submit-btn">创建卡片</button>
+          <div class="textarea-container">
+            <textarea v-model="llm_content" placeholder="使用大模型自动生成卡片" class="textarea" rows="8"></textarea>
+            <div class="llm-submit-wrapper">
+              <div class="llm-submit">
+                大模型提取
+              </div>
+            </div>
+          </div>
+
+          <button @click="handleAddCard" class="submit-btn">创建卡片</button>
+      </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
@@ -138,25 +125,25 @@ onMounted(async () => {
   flex-wrap: nowrap;
   white-space: nowrap;
   padding: 10px;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
-  border-radius: 12px; 
-  background: #222222;   
-  scrollbar-width: none; 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  background: #222222;
+  scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .textarea-container {
-  position: relative; 
+  position: relative;
 }
 
 .llm-submit-wrapper {
-  position: absolute; 
+  position: absolute;
   bottom: 20px;
   right: 15px;
 }
 
 .group-select::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
 
 .llm-submit {

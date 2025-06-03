@@ -8,14 +8,14 @@ import { useAppInitStore } from '@/stores/appInitStore'; // 导入 store
 const router = useRouter();
 const cards = ref<Cards[]>([]);
 const sqlite = new SqliteService();
-const appInit = useAppInitStore(); 
+const appInit = useAppInitStore();
 
 interface Cards {
-  card_id:    number;
-  group_id:   number;
+  card_id: number;
+  group_id: number;
   group_name: string;
-  question:   string;
-  answer:     string;
+  question: string;
+  answer: string;
 }
 
 async function loadReviewCards() {
@@ -23,17 +23,17 @@ async function loadReviewCards() {
   try {
     const reviewCards = await sqlite.getReviewCards();
     cards.value = await Promise.all(reviewCards.map(async card => ({
-      card_id:    card.card_id ?? 0,
-      group_id:   card.group_id,
+      card_id: card.card_id ?? 0,
+      group_id: card.group_id,
       group_name: (await sqlite.getGroupByID(card.group_id))?.[0]?.group_name,
-      question:   card.question,
-      answer:     card.answer ?? ""
+      question: card.question,
+      answer: card.answer ?? ""
     })));
     // console.log('Review card loaded:', cards.value);
     cardsNum.value = cards.value.length;
   } catch (error: any) {
     console.error('Failed to load review cards:', error);
-  } 
+  }
 }
 
 const cardsNum = ref<number>(0);
@@ -83,70 +83,71 @@ const changeShowAnswer = () => {
 
 <template>
   <div class="home-page">
-     <div class="form-container">
+    <div class="form-container">
 
-        <div class="title-container">
-          <h1>复习</h1>
-          <h2>{{ currentLable + 1 }} <span style="opacity: 0.6;">/ {{ cardsNum }}</span></h2>
-        </div>
+      <div class="title-container">
+        <h1>复习</h1>
+        <h2>{{ currentLable + 1 }} <span style="opacity: 0.6;">/ {{ cardsNum }}</span></h2>
+      </div>
 
-        <transition name="fade">
-          <div v-if="cards[currentLable]">
-            <div class="input">
-              <h3 class="title">问题</h3>
-              <transition name="fade">
-                <p class="content">{{ cards[currentLable].question }}</p>
-              </transition>
-            </div>          
+      <transition name="fade">
+        <div v-if="cards[currentLable]">
+          <div class="input">
+            <h3 class="title">问题</h3>
+            <transition name="fade">
+              <p class="content">{{ cards[currentLable].question }}</p>
+            </transition>
           </div>
-        </transition>
+        </div>
+      </transition>
 
-        <transition name="fade">
-          <div v-if="cards[currentLable]">
-            <div class="textarea">
-              <div>
-                <h3 class="title">答案</h3>
-                <p class="content" :class="{ disabled: !showAnswer }">{{ cards[currentLable].answer }}</p>
-              </div>
-              <transition name="fade">
-                <div class="cover" :class="{ disabled: showAnswer }" @click="changeShowAnswer">
-                  <div class="stop-label">
-                    <div class="stop-label-white">
-                      <div class="stop-label-line"></div>
-                    </div>
-                  </div>
-                  <div class="slogan">点击以查看答案</div>
-                </div>
-              </transition>
+      <transition name="fade">
+        <div v-if="cards[currentLable]">
+          <div class="textarea">
+            <div>
+              <h3 class="title">答案</h3>
+              <p class="content" :class="{ disabled: !showAnswer }">{{ cards[currentLable].answer }}</p>
             </div>
-          </div>
-        </transition>
-
-        <div class="score-bar">
-          <div class="score-button b1" :class="{ active: selectScore === 1 }" @click="selectScore = 1">
-            <div style="font-weight: bold;">一无所知</div>
-            <div style="font-size: small;">⭐</div>
-          </div>
-          <div class="score-button b2" :class="{ active: selectScore === 2 }" @click="selectScore = 2">
-            <div style="font-weight: bold;">似曾相识</div>
-            <div style="font-size: small;">⭐⭐⭐</div>
-          </div>
-          <div class="score-button b3" :class="{ active: selectScore === 3 }" @click="selectScore = 3">
-            <div style="font-weight: bold;">记忆犹新</div>
-            <div style="font-size: small;">⭐⭐⭐⭐⭐</div>
+            <transition name="fade">
+              <div class="cover" :class="{ disabled: showAnswer }" @click="changeShowAnswer">
+                <div class="stop-label">
+                  <div class="stop-label-white">
+                    <div class="stop-label-line"></div>
+                  </div>
+                </div>
+                <div class="slogan">点击以查看答案</div>
+              </div>
+            </transition>
           </div>
         </div>
+      </transition>
 
-        <transition name="fade">
-          <div class="button-container">
-            <button class="jump-button" @click="nextCard" v-if="currentLable < cards.length - 1">下一张 ></button>
-            <button class="jump-button" @click="nextCard" v-if="currentLable === cards.length - 1">完成复习</button>
-          </div>
-        </transition>
+      <div class="score-bar">
+        <div class="score-button b1" :class="{ active: selectScore === 1 }" @click="selectScore = 1">
+          <div style="font-weight: bold;">一无所知</div>
+          <div style="font-size: small;">⭐</div>
+        </div>
+        <div class="score-button b2" :class="{ active: selectScore === 2 }" @click="selectScore = 2">
+          <div style="font-weight: bold;">似曾相识</div>
+          <div style="font-size: small;">⭐⭐⭐</div>
+        </div>
+        <div class="score-button b3" :class="{ active: selectScore === 3 }" @click="selectScore = 3">
+          <div style="font-weight: bold;">记忆犹新</div>
+          <div style="font-size: small;">⭐⭐⭐⭐⭐</div>
+        </div>
+      </div>
 
-        <div class="return-button" @click="router.back()">< 返回</div>
+      <transition name="fade">
+        <div class="button-container">
+          <button class="jump-button" @click="nextCard" v-if="currentLable < cards.length - 1">下一张 ></button>
+          <button class="jump-button" @click="nextCard" v-if="currentLable === cards.length - 1">完成复习</button>
+        </div>
+      </transition>
+
+      <div class="return-button" @click="router.back()">
+        < 返回</div>
+      </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
@@ -219,7 +220,7 @@ const changeShowAnswer = () => {
 .cover {
   position: absolute;
   background-color: #222222;
-  box-shadow: inset 0 1.5px 6px rgba(0,0,0,0.4); 
+  box-shadow: inset 0 1.5px 6px rgba(0, 0, 0, 0.4);
   width: 100%;
   height: 100%;
   left: 0;
@@ -266,7 +267,7 @@ const changeShowAnswer = () => {
   border-radius: 10px;
   background-color: #222222;
   color: white;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
   transition: border 0.15s;
 }
 
@@ -281,7 +282,7 @@ const changeShowAnswer = () => {
   background-color: #222222;
   color: white;
   transition: border 0.15s;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
@@ -359,9 +360,9 @@ h1 {
 .fade-leave-active {
   transition: opacity 0.15s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
 </style>
-

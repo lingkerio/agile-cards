@@ -18,11 +18,12 @@ const jumpAddCards = () => {
   <div class="add-choose-page">
     <div class="form-container">
       <h1>选择添加类型</h1>
-      <div class="return-button" @click="router.back()">< 返回</div>
-      <button @click="jumpAddGroup" class="add-button">添加卡片组</button>
-      <button @click="jumpAddCards" class="add-button">添加卡片</button>
+      <div class="return-button" @click="router.back()">
+        < 返回</div>
+          <button @click="jumpAddGroup" class="add-button">添加卡片组</button>
+          <button @click="jumpAddCards" class="add-button">添加卡片</button>
+      </div>
     </div>
-  </div>
 </template>
 
 <style scoped>

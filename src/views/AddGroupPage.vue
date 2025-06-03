@@ -37,20 +37,16 @@ const handleSubmit = async () => {
   <div class="add-card-group-page">
     <div class="form-container">
       <h1>添加卡片组</h1>
-      
-      <div class="return-button" @click="router.back()">< 返回</div>
-      <input v-model="title" placeholder="请输入卡片组名称" class="input" />
 
-      <textarea
-        v-model="description"
-        placeholder="请输入描述（可选）"
-        class="textarea"
-        rows="12"
-      ></textarea>
+      <div class="return-button" @click="router.back()">
+        < 返回</div>
+          <input v-model="title" placeholder="请输入卡片组名称" class="input" />
 
-      <button @click="handleSubmit" class="submit-btn">创建卡片组</button>
+          <textarea v-model="description" placeholder="请输入描述（可选）" class="textarea" rows="12"></textarea>
+
+          <button @click="handleSubmit" class="submit-btn">创建卡片组</button>
+      </div>
     </div>
-  </div>
 </template>
 
 <style scoped>

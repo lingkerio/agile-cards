@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watchEffect } from 'vue'
-import { useCardsStore } from '@/stores/cards'
-import { useCardGroupsStore } from '@/stores/cardGroups'
 import TopBar from '@/components/TopBar.vue'
 import webdavService from '@/services/webDavService'
 import databaseService from '@/services/__databaseService.ts'
@@ -17,16 +15,16 @@ const props = defineProps<{
 }>()
 
 interface Cards {
-  id:         number;
-  group_id:   number;
+  id: number;
+  group_id: number;
   group_name: string;
-  question:   string;
-  answer:     string;
+  question: string;
+  answer: string;
 };
 
 interface Group {
-  id:          number;
-  title:       string;
+  id: number;
+  title: string;
   description: string;
 };
 
@@ -39,16 +37,16 @@ async function loadCardsAndGroup() {
     const cardsSqlite = await sqlite.getCards();
     // console.log('Loaded cards', cardsSqlite);
     cards.value = await Promise.all(cardsSqlite.map(async card => ({
-      id:         card.card_id ?? 0,
-      group_id:   card.group_id,
+      id: card.card_id ?? 0,
+      group_id: card.group_id,
       group_name: (await sqlite.getGroupByID(card.group_id))?.[0]?.group_name,
-      question:   card.question,
-      answer:     card.answer ?? ""
+      question: card.question,
+      answer: card.answer ?? ""
     })));
     const groupSqlite = await sqlite.getGroup();
     group.value = await Promise.all(groupSqlite.map(async group => ({
-      id:          group.group_id ?? 0,
-      title:       group.group_name,
+      id: group.group_id ?? 0,
+      title: group.group_name,
       description: group.group_dis ?? ""
     })));
     cardsNum.value = await sqlite.getCardsNum();
@@ -245,7 +243,7 @@ const jumpGroup = (group_name: string) => {
 
 <template>
   <div class="lib-page">
-    <TopBar :info="'卡片库'" :status="groupNum + ' 个卡片组'" :card_num="cardsNum"/>
+    <TopBar :info="'卡片库'" :status="groupNum + ' 个卡片组'" :card_num="cardsNum" />
     <div class="controls">
       <div style="width: 90%; margin: 0 auto;">
         <div class="search-container">
@@ -260,7 +258,7 @@ const jumpGroup = (group_name: string) => {
     </div>
 
     <div class="cards-grid">
-      
+
       <transition name="fade">
         <div v-if="isSearchGroup" class="group-control">
           <div class="group-control-wrapper">
@@ -279,11 +277,7 @@ const jumpGroup = (group_name: string) => {
         </div>
       </transition>
 
-      <div 
-        v-for="card in filteredCards" 
-        :key="card.id" 
-        class="card"
-      >
+      <div v-for="card in filteredCards" :key="card.id" class="card">
         <transition name="fade">
           <div class="card-container" @click="router.push(`/lib/cards/${card.id}`)">
             <h3 class="truncate-h3">{{ card.question }}</h3>
@@ -337,10 +331,12 @@ const jumpGroup = (group_name: string) => {
 .fade-leave-active {
   transition: opacity 0.15s ease-in-out;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
+
 .fade-enter-to,
 .fade-leave-from {
   opacity: 1;
@@ -354,9 +350,9 @@ const jumpGroup = (group_name: string) => {
   /* background-color: red; */
   border-radius: 10px;
   display: grid;
-  grid-template-columns: 1fr 50px;  
-  grid-template-rows: 1fr 1fr;      
-  gap: 10px;                        
+  grid-template-columns: 1fr 50px;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
   align-items: stretch;
 }
 
@@ -400,7 +396,8 @@ const jumpGroup = (group_name: string) => {
 
 .submit-btn {
   grid-column: 2 / 3;
-  grid-row: 1 / 3; /* 跨两行 */
+  grid-row: 1 / 3;
+  /* 跨两行 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -409,7 +406,8 @@ const jumpGroup = (group_name: string) => {
   border-radius: 10px;
   cursor: pointer;
   user-select: none;
-  height: 100%; /* 填满两行高度 */
+  height: 100%;
+  /* 填满两行高度 */
 }
 
 .group-control-description {
@@ -422,7 +420,7 @@ const jumpGroup = (group_name: string) => {
 }
 
 .group-control-wrapper {
- position: relative;
+  position: relative;
 }
 
 .group-control-fix {
@@ -461,10 +459,10 @@ const jumpGroup = (group_name: string) => {
   flex-wrap: nowrap;
   white-space: nowrap; */
   padding: 10px;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
-  border-radius: 12px; 
-  background: #222222;   
-  scrollbar-width: none; 
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  background: #222222;
+  scrollbar-width: none;
   -ms-overflow-style: none;
   width: 90vw;
   margin-left: 5vw;
@@ -483,14 +481,14 @@ const jumpGroup = (group_name: string) => {
 
 .truncate-h3 {
   white-space: nowrap;
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .truncate-p {
   white-space: nowrap;
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-group-wrapper {
@@ -506,10 +504,8 @@ const jumpGroup = (group_name: string) => {
   bottom: 0;
   right: 100%;
   width: 50px;
-  background: linear-gradient(
-    to right, rgb(53, 53, 53, 0), rgb(53, 53, 53, 1)
-  );
-  pointer-events: none; 
+  background: linear-gradient(to right, rgb(53, 53, 53, 0), rgb(53, 53, 53, 1));
+  pointer-events: none;
 }
 
 .card-group {
