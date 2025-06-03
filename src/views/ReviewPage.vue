@@ -75,18 +75,18 @@ onMounted(() => {
         <div class="content-title">
           您有 <span style="color: #ffffff;"> {{ cards.length }} </span> 张卡片需要复习。
         </div>
-        <div class="review-btn">开始复习</div>
+        <div class="review-btn" @click="router.push('/review/detail')">开始复习</div>
         <div class="review-cards">
           <div class="review-cards-column">
-            <div v-for="card in cardsSngl" :key="card.card_id" class="review-card">
-              <div class="group-label">{{ card.group_name }}</div>
+            <div v-for="card in cardsSngl" :key="card.card_id" class="review-card" @click="router.push(`/lib/cards/${card.card_id}`)">
+              <div class="group-label" @click.stop="router.push(`/lib/groups/group::${card.group_name}`)">{{ card.group_name }}</div>
               <h4>{{ card.question }}</h4>
               <p>{{ card.answer ?? "" }}</p>
             </div>
           </div>
           <div class="review-cards-column">
-            <div v-for="card in cardsDual" :key="card.card_id" class="review-card">
-              <div class="group-label">{{ card.group_name }}</div>
+            <div v-for="card in cardsDual" :key="card.card_id" class="review-card" @click="router.push(`/lib/cards/${card.card_id}`)">
+              <div class="group-label" @click.stop="router.push(`/lib/groups/group::${card.group_name}`)">{{ card.group_name }}</div>
               <h4>{{ card.question }}</h4>
               <p>{{ card.answer ?? "" }}</p>
             </div>
@@ -109,6 +109,11 @@ onMounted(() => {
   text-overflow: ellipsis; 
   font-weight: bold;
   border-radius: 10px;
+  transition: color 0.15s;
+}
+
+.group-label:hover {
+  background-color: #932700;
 }
 
 .review-card p,
@@ -121,11 +126,14 @@ onMounted(() => {
 
 .review-card {
   padding: 10px;
-  background-color: green;
   border-radius: 10px;
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); 
   border-radius: 12px; 
-  background: #303030;
+  background-color: #303030;
+}
+
+.review-card:hover {
+  background-color: #252525;
 }
 
 .review-cards {

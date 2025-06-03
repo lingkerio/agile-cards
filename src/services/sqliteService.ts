@@ -102,7 +102,7 @@ export class SqliteService {
     if (!this.db) throw new Error('Database not initialized.');
     const result = await this.db.run(`
       INSERT INTO \`Cards\` (card_hash, group_id, question, answer, last_review, next_review) VALUES (?, ?, ?, ?, ?, ?);
-    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now()]);
+    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now() + 86400000]);
     return { changes: result.changes?.changes || 0 };
   }
 
@@ -193,7 +193,32 @@ export class SqliteService {
     const result = await this.db.query(`
       UPDATE \`Cards\` SET card_hash = ?, group_id = ?, question = ?, answer = ?, last_review = ?, next_review = ?
       WHERE card_id = ?;
-    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", cards.last_review ?? Date.now(), cards.next_review ?? Date.now(), cards.card_id ?? 0]);
+    `, [
+      await this.cardHash(cards.question, cards.answer ?? ""), 
+      cards.group_id, 
+      cards.question, 
+      cards.answer ?? "", 
+      cards.last_review ?? Date.now(), 
+      cards.next_review ?? (Date.now() + 86400000), 
+      cards.card_id ?? 0
+    ]);
+    return result.values?.[0];
+  }
+
+  // Review cards of id
+  async reviewCards(card_id: number, score: number): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const info = await this.db.query(`
+      SELECT last_review, next_review FROM \`Cards\` WHERE card_id = ?;
+    `, [card_id]);
+    console.log('reviewCards function', info);
+    const time = (Date.now() - info.values?.[0]?.["last_review"]) * score;
+    console.log('Next gap time', time);
+    const result = await this.db.query(`
+      UPDATE \`Cards\` SET last_review = ?, next_review = ?
+      WHERE card_id = ?;
+    `, [Date.now(), Date.now() + time, card_id]);
     return result.values?.[0];
   }
 

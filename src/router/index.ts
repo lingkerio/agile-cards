@@ -8,6 +8,7 @@ import AddChoosePage from '@/views/AddChoosePage.vue'
 import AddGroupPage from '@/views/AddGroupPage.vue'
 import AddCardsPage from '@/views/AddCardsPage.vue'
 import ReviewPage from '@/views/ReviewPage.vue'
+import ReviewDetailPage from '@/views/ReviewDetailPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +37,11 @@ const router = createRouter({
       path: '/review',
       name: 'review',
       component: ReviewPage,
+    },
+    {
+      path: '/review/detail',
+      name: 'review-detail',
+      component: ReviewDetailPage,
     },
     {
       path: '/settings',

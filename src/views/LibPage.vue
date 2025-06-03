@@ -517,6 +517,10 @@ const jumpGroup = (group_name: string) => {
   border-radius: 10px;
 }
 
+.card-group:hover {
+  background-color: #932700;
+}
+
 .lib-page {
   /* padding: 20px; */
   background-color: #1e1e1e;

@@ -187,7 +187,11 @@ const submitFix = async () => {
   background-color: #353535;
   color: white;
   transition: border 0.15s;
-  overflow: hidden;
+  height: 100px;
+}
+
+.textarea-format::-webkit-scrollbar {
+  display: none;
 }
 
 .textarea-format:focus {
@@ -298,6 +302,7 @@ h2 {
 
 .content {
   opacity: 0.6;
+  word-break: break-all;
 }
 
 .input:focus,
