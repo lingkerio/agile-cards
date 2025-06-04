@@ -122,26 +122,36 @@ const isUploading = ref(false);
 const isDownloading = ref(false);
 const syncMessage = ref('');
 const showSyncMessage = ref(false);
+const debugInfo = ref<string[]>([]);
+const showDebugInfo = ref(false);
 
 // 上传数据库到WebDAV
 const uploadDatabase = async () => {
   try {
     isUploading.value = true;
-    syncMessage.value = '正在上传数据库...';
+    syncMessage.value = '开始上传流程...';
     showSyncMessage.value = true;
 
-    await webdavService.uploadDatabaseToWebDAV('knowledgeCardsDB');
-
-    syncMessage.value = '数据库上传成功！';
+    console.log('开始上传数据库...');
+    
+    // 实际执行上传
+    syncMessage.value = '步骤: 正在传输文件...';
+    await webdavService.uploadDatabaseToWebDAV('/backup/data.sql');
+    
+    console.log('数据库上传完成');
+    syncMessage.value = '✅ 数据库上传成功！';
     setTimeout(() => {
       showSyncMessage.value = false;
     }, 3000);
   } catch (error) {
     console.error('上传数据库失败:', error);
-    syncMessage.value = '上传失败: ' + (error instanceof Error ? error.message : String(error));
+    
+    
+    
+    // 延长错误信息显示时间
     setTimeout(() => {
       showSyncMessage.value = false;
-    }, 3000);
+    }, 8000);
   } finally {
     isUploading.value = false;
     showSyncOptions.value = false;
@@ -152,21 +162,102 @@ const uploadDatabase = async () => {
 const downloadDatabase = async () => {
   try {
     isDownloading.value = true;
-    syncMessage.value = '正在下载数据库...';
+    syncMessage.value = '开始下载流程...';
     showSyncMessage.value = true;
 
-    await webdavService.downloadDatabaseFromWebDAV('/backup/database.json');
+    console.log('开始下载数据库...');
+    
+    // 步骤1：下载并导入数据库
+    syncMessage.value = '步骤1: 下载并导入数据库...';
+    await webdavService.downloadDatabaseFromWebDAV('/backup/data.sql');
+    
+    // 步骤2：重新初始化本地数据库连接
+    syncMessage.value = '步骤2: 重新初始化数据库连接...';
+    console.log('重新初始化数据库连接...');
+    
+    // 安全地重新初始化数据库
+    try {
+      // 确保数据库实例重新初始化
+      await sqlite.initDB();
+    } catch (initError) {
+      console.log('重新初始化遇到问题，尝试重新创建连接:', initError);
+      // 如果初始化失败，可能需要重新创建实例
+      await sqlite.initDB();
+    }
+    
+    // 步骤3：验证导入的数据
+    syncMessage.value = '步骤3: 验证导入数据...';
+    console.log('验证导入数据...');
+    const importedCards = await sqlite.getCards();
+    const importedGroups = await sqlite.getGroup();
+    console.log(`导入验证: 发现 ${importedGroups.length} 个分组, ${importedCards.length} 张卡片`);
+    
+    // 步骤4：重新加载界面数据
+    syncMessage.value = '步骤4: 重新加载界面数据...';
+    await loadCardsAndGroup();
+    console.log('数据重新加载完成');
 
-    syncMessage.value = '数据库下载成功！';
+    syncMessage.value = '✅ 数据库下载并导入成功！';
     setTimeout(() => {
       showSyncMessage.value = false;
     }, 3000);
   } catch (error) {
     console.error('下载数据库失败:', error);
-    syncMessage.value = '下载失败: ' + (error instanceof Error ? error.message : String(error));
+    
+    // 详细的错误分析和显示
+    let errorMessage = '❌ 下载失败: ';
+    let debugInfoArray = [];
+    
+    if (error instanceof Error) {
+      errorMessage += error.message;
+      debugInfoArray.push(`错误类型: ${error.name}`);
+      debugInfoArray.push(`错误消息: ${error.message}`);
+      
+      // 分析具体错误类型
+      if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+        debugInfoArray.push('📡 网络连接问题');
+        debugInfoArray.push('建议: 检查网络连接状态');
+      } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        debugInfoArray.push('🔐 认证失败');
+        debugInfoArray.push('建议: 检查用户名密码配置');
+      } else if (error.message.includes('404')) {
+        debugInfoArray.push('📁 文件不存在');
+        debugInfoArray.push('建议: 先上传数据库文件');
+      } else if (error.message.includes('timeout')) {
+        debugInfoArray.push('⏰ 下载超时');
+        debugInfoArray.push('建议: 检查网络速度');
+      } else if (error.message.includes('Close: No available connection')) {
+        debugInfoArray.push('🔌 数据库连接问题');
+        debugInfoArray.push('建议: 数据库连接已关闭，正在重新初始化');
+      }
+      
+      // 添加配置信息
+      debugInfoArray.push(`🌐 目标服务器: https://dav.jianguoyun.com/dav/`);
+      debugInfoArray.push(`📂 下载路径: /backup/data.sql`);
+      
+    } else {
+      errorMessage += String(error);
+      debugInfoArray.push(`未知错误: ${String(error)}`);
+    }
+    
+    // 保存调试信息到响应式变量
+    debugInfo.value = debugInfoArray;
+    showDebugInfo.value = true;
+    
+    // 显示主要错误信息
+    syncMessage.value = errorMessage;
+    
+    // 在控制台输出详细调试信息
+    console.log('=== 详细调试信息 ===');
+    debugInfoArray.forEach((info, index) => {
+      console.log(`${index + 1}. ${info}`);
+    });
+    console.log('==================');
+    
+    // 延长错误信息显示时间
     setTimeout(() => {
       showSyncMessage.value = false;
-    }, 3000);
+    }, 8000);
   } finally {
     isDownloading.value = false;
     showSyncOptions.value = false;
@@ -223,6 +314,20 @@ const groupNum = ref<number>(0);
 
 const jumpGroup = (group_name: string) => {
   searchQuery.value = "group::" + group_name;
+}
+
+// 复制调试信息到剪贴板
+const copyToClipboard = async (text: string) => {
+  try {
+    if (window.navigator?.clipboard) {
+      await window.navigator.clipboard.writeText(text);
+      console.log('调试信息已复制到剪贴板');
+    } else {
+      console.log('剪贴板API不可用');
+    }
+  } catch (error) {
+    console.error('复制失败:', error);
+  }
 }
 </script>
 
@@ -307,6 +412,29 @@ const jumpGroup = (group_name: string) => {
     <!-- 同步消息提示 - 移到lib-page内部 -->
     <div v-if="showSyncMessage" class="sync-message">
       {{ syncMessage }}
+      <div v-if="showDebugInfo && debugInfo.length > 0" class="debug-toggle">
+        <button @click="showDebugInfo = !showDebugInfo" class="debug-btn">
+          {{ showDebugInfo ? '隐藏' : '显示' }}详细信息
+        </button>
+      </div>
+    </div>
+
+    <!-- 调试信息面板 -->
+    <div v-if="showSyncMessage && showDebugInfo && debugInfo.length > 0" class="debug-panel">
+      <div class="debug-header">
+        <h4>🔍 详细调试信息</h4>
+        <button @click="showDebugInfo = false" class="close-debug">×</button>
+      </div>
+      <div class="debug-content">
+        <div v-for="(info, index) in debugInfo" :key="index" class="debug-item">
+          <span class="debug-index">{{ index + 1 }}.</span>
+          <span class="debug-text">{{ info }}</span>
+        </div>
+      </div>
+      <div class="debug-actions">
+        <button @click="debugInfo = []; showDebugInfo = false;" class="clear-debug">清除信息</button>
+        <button @click="copyToClipboard(debugInfo.join('\n'))" class="copy-debug">复制到剪贴板</button>
+      </div>
     </div>
   </div>
 </template>
@@ -817,10 +945,153 @@ const jumpGroup = (group_name: string) => {
   bottom: 150px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.9);
   color: white;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 15px 25px;
+  border-radius: 8px;
   z-index: 1000;
+  max-width: 80vw;
+  min-width: 200px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.debug-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: all 0.15s;
+}
+
+.debug-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.debug-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: all 0.15s;
+}
+
+.debug-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.debug-panel {
+  position: fixed;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 8px;
+  z-index: 1000;
+  max-width: 80vw;
+  min-width: 200px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.close-debug {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: all 0.15s;
+}
+
+.close-debug:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.debug-content {
+  margin-bottom: 10px;
+}
+
+.debug-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.debug-index {
+  font-weight: bold;
+}
+
+.debug-text {
+  margin-left: 10px;
+}
+
+.debug-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.clear-debug {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+
+.copy-debug {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 5px;
 }
 </style>
