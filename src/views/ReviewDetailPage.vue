@@ -457,7 +457,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding-bottom: 105px;
+  padding-bottom: 115px;
 }
 
 .return-button {

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.agile.acards',
-  appName: '敏捷卡片',
+  appName: 'Agile card',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

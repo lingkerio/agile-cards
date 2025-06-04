@@ -371,7 +371,7 @@ const MsgBox = async (content: string, isConfirm: boolean): Promise<boolean> => 
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding-bottom: 55px;
+  padding-bottom: 65px;
 }
 
 h1 {

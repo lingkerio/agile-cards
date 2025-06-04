@@ -143,8 +143,8 @@ export class SqliteService {
     if (!this.db) throw new Error('Database not initialized.');
     const result = await this.db.run(`
       INSERT INTO \`Cards\` (card_hash, group_id, question, answer, last_review, next_review) VALUES (?, ?, ?, ?, ?, ?);
-    `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now()]); // # 测试逻辑
-    // `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now() + 86400000]); // ! 正确逻辑
+      `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now() + 86400000]); // ! 正确逻辑
+    // `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now()]); // # 测试逻辑
     return { changes: result.changes?.changes || 0 };
   }
 
@@ -281,22 +281,22 @@ export class SqliteService {
       UPDATE \`Cards\` SET card_hash = ?, group_id = ?, question = ?, answer = ?, last_review = ?, next_review = ?
       WHERE card_id = ?;
     `, [
-    //   await this.cardHash(cards.question, cards.answer ?? ""), 
-    //   cards.group_id, 
-    //   cards.question, 
-    //   cards.answer ?? "", 
-    //   cards.last_review ?? Date.now(), 
-    //   cards.next_review ?? (Date.now() + 86400000), 
-    //   cards.card_id ?? 0
-    // ]); // ! 正确逻辑
       await this.cardHash(cards.question, cards.answer ?? ""), 
       cards.group_id, 
       cards.question, 
       cards.answer ?? "", 
       cards.last_review ?? Date.now(), 
-      cards.next_review ?? Date.now(), 
+      cards.next_review ?? (Date.now() + 86400000), 
       cards.card_id ?? 0
-    ]); // # 测试逻辑
+    ]); // ! 正确逻辑
+    //   await this.cardHash(cards.question, cards.answer ?? ""), 
+    //   cards.group_id, 
+    //   cards.question, 
+    //   cards.answer ?? "", 
+    //   cards.last_review ?? Date.now(), 
+    //   cards.next_review ?? Date.now(), 
+    //   cards.card_id ?? 0
+    // ]); // # 测试逻辑
     return result.values?.[0];
   }
 
@@ -313,8 +313,8 @@ export class SqliteService {
     const result = await this.db.query(`
       UPDATE \`Cards\` SET last_review = ?, next_review = ?
       WHERE card_id = ?;
-    `, [Date.now(), Date.now(), card_id]); // # 测试逻辑
-    // `, [Date.now(), Date.now() + time, card_id]); // ! 正确逻辑
+      `, [Date.now(), Date.now() + time, card_id]); // ! 正确逻辑
+      // `, [Date.now(), Date.now(), card_id]); // # 测试逻辑
     return result.values?.[0];
   }
 

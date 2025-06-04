@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">敏捷卡片</string>
-    <string name="title_activity_main">敏捷卡片</string>
+    <string name="app_name">Agile card</string>
+    <string name="title_activity_main">Agile card</string>
     <string name="package_name">com.agile.acards</string>
     <string name="custom_url_scheme">com.agile.acards</string>
 </resources>

@@ -54,7 +54,7 @@ const props = defineProps<{
   justify-content: space-between;
   align-items: center;
   padding: 0 5vw;
-  padding-top: 20px;
+  padding-top: 25px;
   z-index: 50;
   transition: background-color 0.15s ease;
   background-color: #1e1e1e;

@@ -772,7 +772,7 @@ const MsgBox = async (content: string, isConfirm: boolean): Promise<boolean> => 
   /* padding: 20px; */
   background-color: #1e1e1e;
   /* min-height: 100vh; */
-  padding-bottom: 95px;
+  padding-bottom: 105px;
   /* 为底部导航留出空间 */
 }
 
@@ -999,7 +999,7 @@ const MsgBox = async (content: string, isConfirm: boolean): Promise<boolean> => 
 /* 修改WebDAV同步按钮样式 */
 .webdav-sync-container {
   position: fixed;
-  bottom: 75px;
+  bottom: 95px;
   right: 100px;
   z-index: 999;
   display: flex;

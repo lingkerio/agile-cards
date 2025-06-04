@@ -304,7 +304,7 @@ onUnmounted(() => {
 
 .page-list {
   padding-top: 10vh;
-  padding-bottom: 20px;
+  padding-bottom: 30px;
 }
 
 .title {
