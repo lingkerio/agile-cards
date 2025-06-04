@@ -30,7 +30,14 @@ const sqlJsConfig = {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 
+    -apple-system,      /* iOS/macOS 系统字体 */
+    BlinkMacSystemFont, /* macOS Chrome */
+    "Segoe UI",         /* Windows */
+    Roboto,             /* Android */
+    "Helvetica Neue",   /* 备用无衬线字体 */
+    Arial,              /* 备用无衬线字体 */
+    sans-serif;         /* 最后兜底无衬线字体 */
   background-color: #1e1e1e;
   color: white;
 }
@@ -49,5 +56,9 @@ body {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+html, body {
+  scrollbar-width: none;
 }
 </style>

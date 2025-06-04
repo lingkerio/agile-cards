@@ -69,6 +69,17 @@ onMounted(async () => {
 onUnmounted(() => {
   sqlite.closeDB();
 });
+
+const showLoadLabel = ref<boolean>(false);
+
+const llmAbstract = async () => {
+  showLoadLabel.value = true;
+  const response = JSON.parse(await getOpenAIResponse(llm_content.value));
+  // console.log('Response from Deepseek: ', response);
+  question.value = response.question;
+  answer.value = response.answer;
+  showLoadLabel.value = false;
+}
 </script>
 
 <template>
@@ -78,7 +89,7 @@ onUnmounted(() => {
 
       <div class="return-button" @click="router.back()">
         < 返回</div>
-          <input v-model="question" placeholder="请输入卡片问题" class="input" />
+          <textarea v-model="question" placeholder="请输入卡片问题" class="textarea" rows="4"></textarea>
 
           <textarea v-model="answer" placeholder="请输入卡片答案" class="textarea" rows="8"></textarea>
 
@@ -93,9 +104,12 @@ onUnmounted(() => {
           <div class="textarea-container">
             <textarea v-model="llm_content" placeholder="使用大模型自动生成卡片" class="textarea" rows="8"></textarea>
             <div class="llm-submit-wrapper">
-              <div class="llm-submit">
-                大模型提取
-              </div>
+              <transition name="fade">
+                <div class="llm-submit" @click="llmAbstract">
+                  <div>大模型提取</div>
+                  <div v-if="showLoadLabel" class="spinner"></div>
+                </div>
+              </transition>
             </div>
           </div>
 
@@ -105,6 +119,20 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #ccc;      /* 灰色边框 */
+  border-top-color: #444444;      /* 上边框颜色，形成旋转视觉 */
+  border-radius: 50%;          /* 圆形 */
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .return-button {
   position: absolute;
   left: 5px;
@@ -151,9 +179,14 @@ onUnmounted(() => {
 }
 
 .llm-submit {
-  padding: 5px;
+  padding: 5px 10px;
   border-radius: 10px;
   background-color: #da3b01;
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
 }
 
 .llm-submit:hover {
@@ -199,6 +232,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding-bottom: 55px;
 }
 
 h1 {
@@ -229,7 +263,10 @@ h1 {
   background-color: #2a2a2a;
   color: white;
   transition: border 0.15s;
-  overflow: hidden;
+}
+
+.textarea::-webkit-scrollbar {
+  display: none;
 }
 
 .input:focus,
@@ -272,5 +309,15 @@ h1 {
 
 .submit-btn:hover {
   background-color: #0e6a0e;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
