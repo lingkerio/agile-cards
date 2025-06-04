@@ -21,6 +21,17 @@ export interface Record {
   avg_score: number;
 }
 
+export interface DavConfig {
+  address:  string;
+  username: string;
+  password: string;
+}
+
+export interface LLMConfig {
+  address: string;
+  token:   string;
+}
+
 export class SqliteService {
   private sqlite: SQLiteConnection;
   private db: SQLiteDBConnection | null = null;
@@ -74,9 +85,26 @@ export class SqliteService {
           );
         `;
 
+        const createDavCof = `
+          CREATE TABLE IF NOT EXISTS \`DavCof\` (
+            address  TEXT NOT NULL UNIQUE,
+            username TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL UNIQUE
+          );
+        `;
+
+        const createLLMCof = `
+          CREATE TABLE IF NOT EXISTS \`LLMCof\` (
+            address TEXT NOT NULL UNIQUE,
+            token   TEXT NOT NULL UNIQUE
+          );
+        `;
+
         await db.execute(createGroup);
         await db.execute(createCards);
         await db.execute(createRecord);
+        await db.execute(createDavCof);
+        await db.execute(createLLMCof);
 
         const result = await db.query(`
           SELECT group_name FROM \`Group\` WHERE group_name = ?;
@@ -128,6 +156,30 @@ export class SqliteService {
       INSERT INTO \`Record\` (avg_score) VALUES (?);
     `, [record]);
     return { changes: result.changes?.changes || 0 };
+  }
+
+  // Save WebDav Config
+  async saveDavConfig(conf: DavConfig): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    await this.db.run(`
+      DELETE FROM \`DavCof\`;
+    `);
+    await this.db.run(`
+      INSERT INTO \`DavCof\` (address, username, password) VALUES (?, ?, ?);
+    `, [conf.address, conf.username, conf.password]);
+  }
+
+  // Save LLM Config
+  async saveLLMConfig(conf: LLMConfig): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    await this.db.run(`
+      DELETE FROM \`LLMCof\`;
+    `);
+    await this.db.run(`
+      INSERT INTO \`LLMCof\` (address, token) VALUES (?, ?);
+    `, [conf.address, conf.token]);
   }
 
   // Get group
@@ -282,6 +334,31 @@ export class SqliteService {
     return result.values?.[0]?.["COUNT(*)"] ?? 0;
   }
 
+  // Get WebDAV Config
+  async getDavConfig(): Promise<DavConfig> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`SELECT * FROM \`DavCof\`;`);
+    console.log('DAV Config:', result);
+    return result.values?.[0] ?? { 
+      address:  '',
+      username: '',
+      password: ''
+    };
+  }
+
+  // Get LLM Config
+  async getLLMConfig(): Promise<LLMConfig> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    const result = await this.db.query(`SELECT * FROM \`LLMCof\`;`);
+    console.log('LLM Config:', result);
+    return result.values?.[0] ?? {
+      address: '',
+      token:   ''
+    }
+  }
+
   // Generate card hash
   async cardHash(question: string, answer: string): Promise<string> {
     const encoder = new TextEncoder();
@@ -344,12 +421,12 @@ export class SqliteService {
 
       // 2. Export Cards
       const cards = await this.getCards();
-        if (cards.length > 0) {
-          sqlCommands.push('-- Exporting Cards');
-          cards.forEach(card => {
-            sqlCommands.push(`INSERT OR IGNORE INTO \`Cards\` (card_id, card_hash, group_id, question, answer, last_review, next_review) VALUES (${this.escapeSQLValue(card.card_id)}, ${this.escapeSQLValue(card.card_hash)}, ${this.escapeSQLValue(card.group_id)}, ${this.escapeSQLValue(card.question)}, ${this.escapeSQLValue(card.answer)}, ${this.escapeSQLValue(card.last_review)}, ${this.escapeSQLValue(card.next_review)});`);
-          });
-        }
+      if (cards.length > 0) {
+        sqlCommands.push('-- Exporting Cards');
+        cards.forEach(card => {
+          sqlCommands.push(`INSERT OR IGNORE INTO \`Cards\` (card_id, card_hash, group_id, question, answer, last_review, next_review) VALUES (${this.escapeSQLValue(card.card_id)}, ${this.escapeSQLValue(card.card_hash)}, ${this.escapeSQLValue(card.group_id)}, ${this.escapeSQLValue(card.question)}, ${this.escapeSQLValue(card.answer)}, ${this.escapeSQLValue(card.last_review)}, ${this.escapeSQLValue(card.next_review)});`);
+        });
+      }
 
       // 3. Export Records
       const records = await this.db.query(`
@@ -359,13 +436,29 @@ export class SqliteService {
       if (records.values && records.values.length > 0) {
         sqlCommands.push('-- Exporting Records');
         records.values.forEach((record: any) => {
-          // Including record_id for potential exact restoration.
-          // Note: If importing into a table that already has data, this might cause
-          // conflicts if the target table's auto-increment sequence isn't reset or handled.
-          // Using INSERT OR IGNORE might be safer if exact ID preservation isn't critical
-          // and duplicates based on primary key should be skipped.
-          // For now, keeping INSERT as it matches the original export logic.
           sqlCommands.push(`INSERT INTO \`Record\` (record_id, avg_score) VALUES (${this.escapeSQLValue(record.record_id)}, ${this.escapeSQLValue(record.avg_score)});`);
+        });
+      }
+
+      // 4. Export DavCof
+      const davCofs = await this.db.query(`
+        SELECT address, username, password FROM \`DavCof\`;
+      `);
+      if (davCofs.values && davCofs.values.length > 0) {
+        sqlCommands.push('-- Exporting DavCof');
+        davCofs.values.forEach((dav: any) => {
+          sqlCommands.push(`INSERT OR IGNORE INTO \`DavCof\` (address, username, password) VALUES (${this.escapeSQLValue(dav.address)}, ${this.escapeSQLValue(dav.username)}, ${this.escapeSQLValue(dav.password)});`);
+        });
+      }
+
+      // 5. Export LLMCof
+      const llmCofs = await this.db.query(`
+        SELECT address, token FROM \`LLMCof\`;
+      `);
+      if (llmCofs.values && llmCofs.values.length > 0) {
+        sqlCommands.push('-- Exporting LLMCof');
+        llmCofs.values.forEach((llm: any) => {
+          sqlCommands.push(`INSERT OR IGNORE INTO \`LLMCof\` (address, token) VALUES (${this.escapeSQLValue(llm.address)}, ${this.escapeSQLValue(llm.token)});`);
         });
       }
 
@@ -376,10 +469,10 @@ export class SqliteService {
     } catch (error) {
       // REMOVED: sqlCommands.push('ROLLBACK;'); // executeSet handles rollback on error
       console.error('Error during database export:', error);
-      // Re-throw the error without adding ROLLBACK to the command list
       throw new Error(`Failed to export database to SQL: ${error}`);
     }
   }
+
 
   // --- Import Function ---
   /**
@@ -416,6 +509,10 @@ export class SqliteService {
       console.log('Cleared Cards table.');
       await this.db.run('DELETE FROM `Group`;'); // Then clear groups (cascade should handle cards if not deleted above)
       console.log('Cleared Group table.');
+      await this.db.run('DELETE FROM `DavCof`;'); 
+      console.log('Cleared DavCof table.');
+      await this.db.run('DELETE FROM `LLMCof`;'); 
+      console.log('Cleared LLMCof table.');
 
       // IMPORTANT: Re-insert the default group immediately after clearing,
       // OR ensure the import script *always* contains the default group.
@@ -447,6 +544,23 @@ export class SqliteService {
       // Provide a more informative error return
       return { changes: -1, message: `Import failed: ${err.message || err}` };
     }
+  }
+
+  // DELETE data
+  async deleteData(): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    await this.db.run(`DELETE FROM \`Cards\`;`);
+    await this.db.run(`DELETE FROM \`Group\`;`);
+    await this.db.run(`DELETE FROM \`Record\`;`);
+  }
+
+  // DELETE config
+  async deleteConf(): Promise<void> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error('Database not initialized.');
+    await this.db.run(`DELETE FROM \`DavCof\`;`);
+    await this.db.run(`DELETE FROM \`LLMCof\`;`);
   }
 
   // Close databse

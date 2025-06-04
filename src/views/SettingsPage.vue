@@ -1,121 +1,143 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { CONFIG } from '../config/config';
-import configService from '../services/configService';
-
-const isDark = ref(true);
-const webdavUrl = ref('');
-const webdavUsername = ref('');
-const webdavPassword = ref('');
-const llmUrl = ref('');
-const llmToken = ref('');
-
-const username = ref('游客');
-const avatar = ref('');
-
-// 保存 WebDAV 设置
-const saveWebDAVSettings = () => {
-  try {
-    configService.setConfig('WEBDAV_SERVER_URL', webdavUrl.value);
-    const authToken = btoa(`${webdavUsername.value}:${webdavPassword.value}`);
-    console.log(authToken);
-    configService.setConfig('WEBDAV_AUTH_TOKEN', authToken);
-    localStorage.setItem('webdavUrl', webdavUrl.value);
-    localStorage.setItem('webdavUsername', webdavUsername.value);
-    localStorage.setItem('webdavPassword', webdavPassword.value);
-    localStorage.setItem('webdavAuthToken', authToken);
-    alert('WebDAV 设置已保存');
-  } catch (error) {
-    console.error('保存 WebDAV 设置失败:', error);
-    alert('保存设置失败，请检查输入');
-  }
-};
-
-// 初始化配置加载
-onMounted(() => {
-  const savedUrl = localStorage.getItem('webdavUrl');
-  const savedUsername = localStorage.getItem('webdavUsername');
-  const savedPassword = localStorage.getItem('webdavPassword');
-  const savedAuthToken = localStorage.getItem('webdavAuthToken');
-
-  if (savedUrl) webdavUrl.value = savedUrl;
-  if (savedUsername) webdavUsername.value = savedUsername;
-  if (savedPassword) webdavPassword.value = savedPassword;
-  if (savedAuthToken) configService.setConfig('WEBDAV_AUTH_TOKEN', savedAuthToken);
-
-  if (!savedUrl && CONFIG.WEBDAV_SERVER_URL) {
-    webdavUrl.value = CONFIG.WEBDAV_SERVER_URL;
-  }
-
-  if (savedAuthToken && !savedUsername) {
-    try {
-      const decoded = atob(savedAuthToken);
-      const [usernamePart] = decoded.split(':');
-      if (usernamePart) webdavUsername.value = usernamePart;
-    } catch (e) {
-      console.error('认证令牌解码失败:', e);
-    }
-  }
-});
-
-const onAvatarChange = (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (file) {
-    avatar.value = URL.createObjectURL(file);
-  }
-};
-
-const toggleTheme = () => {
-  isDark.value = !isDark.value;
-  document.body.style.backgroundColor = isDark.value ? '#1e1e1e' : '#ffffff';
-  document.body.style.color = isDark.value ? 'white' : 'black';
-};
-
-const clearCache = () => {
-  localStorage.clear();
-  alert('本地缓存已清除');
-};
-
-const resetAll = () => {
-  localStorage.clear();
-  location.reload();
-};
-
+import { ref, onMounted, onUnmounted, watchEffect } from 'vue';
 import { SqliteService } from '@/services/sqliteService';
-const sqlite = new SqliteService();
+import { useAppInitStore } from '@/stores/appInitStore'; 
+import type { DavConfig, LLMConfig } from '@/services/sqliteService';
 
-const handleExprot = async () =>  {
-  sql_content.value = (await sqlite.exportToSQL());
-  console.log('Export result: ', sql_content.value);
+const sqlite = new SqliteService();
+const appInit = useAppInitStore();
+
+const webdav_address = ref<string>('');
+const webdav_username = ref<string>('');
+const webdav_password = ref<string>('');
+
+const llm_address = ref<string>('');
+const llm_token = ref<string>('');
+
+const submit_webdav_address = ref<string>('');
+const submit_webdav_username = ref<string>('');
+const submit_webdav_password = ref<string>('');
+
+const submit_llm_address = ref<string>('');
+const submit_llm_token = ref<string>('');
+
+const loadConfig = async () => {
+  const davConf = await sqlite.getDavConfig();
+  console.log('davConf loaded', davConf);
+  webdav_address.value  = davConf.address;
+  webdav_username.value = davConf.username;
+  webdav_password.value = davConf.password;
+  const llmConf = await sqlite.getLLMConfig();
+  console.log('llmConf loaded', llmConf);
+  llm_address.value = llmConf.address;
+  llm_token.value   = llmConf.token;
 }
 
-const sql_content = ref<string>('');
-const handleImport = async () => {
-  await sqlite.importFromSQL(sql_content.value);
+onMounted(() => {
+  watchEffect(async () => {
+    if (appInit.isDbInitialized) {
+      // console.log('DB is initialized, proceeding to load card groups.');
+      await loadConfig();
+    } else if (appInit.dbInitializationError) {
+      console.error('DB initialization failed. Cannot load card groups. Error:', appInit.dbInitializationError);
+    } else {
+      // console.log('DB not yet initialized, watchEffect is waiting...');
+    }
+  });
+});
+
+onUnmounted(() => {
+  sqlite.closeDB();
+});
+
+const submit_dav = async () => {
+  const dav_conf: DavConfig = {
+    address:  submit_webdav_address.value,
+    username: submit_webdav_username.value,
+    password: submit_webdav_password.value
+  };
+  await sqlite.saveDavConfig(dav_conf);
+  await loadConfig();
+}
+
+const submit_llm = async () => {
+  const llm_conf: LLMConfig = {
+    address: submit_llm_address.value,
+    token:   submit_llm_token.value
+  };
+  console.log('saving llm config', llm_conf);
+  await sqlite.saveLLMConfig(llm_conf);
+  await loadConfig();
+}
+
+const clean_data = async () => {
+  await sqlite.deleteData();
+  await loadConfig();
+}
+
+const clean_conf = async () => {
+  await sqlite.deleteConf();
+  await loadConfig();
 }
 </script>
 
 <template>
   <div class="settings-page">
     <div class="form-container">
+
       <h1>系统设置</h1>
 
-      <button @click="handleExprot"> Export SQL </button>
-      <button @click="handleImport"> Import SQL </button>
-      <textarea v-model="sql_content" style="height: 500px;"></textarea>
-
-      <!-- 用户头像与用户名 -->
-      <div class="setting-item avatar-block">
-        <label for="avatar-upload" class="avatar">
-          <img v-if="avatar" :src="avatar" alt="头像" />
-          <div v-else class="placeholder">+</div>
-          <input id="avatar-upload" type="file" accept="image/*" @change="onAvatarChange" />
-        </label>
-        <input v-model="username" placeholder="请输入用户名" class="username-input" />
+      <div class="area">
+        <div class="content-title">清理</div>
+        <div class="area-bar">
+          <div class="area-item" @click="clean_data">
+            <div style="margin-left: 5px;">清除本地数据</div>
+            <div class="area-item-label">卡片和卡片库</div>
+          </div>
+          <div class="area-item" @click="clean_conf">
+            <div style="margin-left: 5px;">清除本地配置</div>
+            <div class="area-item-label">WebDAV 和 LLM 配置</div>
+          </div>
+        </div>
       </div>
 
+      <div class="area">
+        <div class="content-title">WebDAV 设置</div>
+        <div class="area-bar">
+          <input v-model="submit_webdav_address" class="textarea" placeholder="请输入 WebDAV 地址"></input>
+          <input v-model="submit_webdav_username" class="textarea" placeholder="请输入 WebDAV 账号"></input>
+          <input v-model="submit_webdav_password" class="textarea" placeholder="请输入 WebDAV 密码"></input>
+          <button class="submit-btn" @click="submit_dav">确认修改</button>
+          <div class="display-item">
+            <div class="display-title">当前 WebDAV 配置</div>
+            <p>地址：{{ (webdav_address != '') ? webdav_address : '无' }}</p>
+            <p>账号：{{ (webdav_username != '') ? webdav_username : '无' }}</p>
+            <p>密码：{{ (webdav_password != '') ? '**********' : '无' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="area">
+        <div class="content-title">LLM API 设置</div>
+        <div class="area-bar">
+          <input v-model="submit_llm_address" class="textarea" placeholder="请输入 LLM API 地址"></input>
+          <input v-model="submit_llm_token" class="textarea" placeholder="请输入 LLM API 令牌"></input>
+          <button class="submit-btn" @click="submit_llm">确认修改</button>
+          <div class="display-item">
+            <div class="display-title">当前 LLM API 配置</div> 
+            <p>地址：{{ (llm_address != '') ? llm_address : '无' }}</p>
+            <p>令牌：{{ 
+              (llm_token != '') 
+              ? ((llm_token.length > 4) 
+                ? (llm_token.slice(0, 7) + '*'.repeat(16)) 
+                : llm_token) 
+              : '无' 
+            }}</p>
+          </div>
+        </div>
+      </div>
       <!-- 通用设置项 -->
-      <div class="setting-item clickable" @click="toggleTheme">
+      <!-- <div class="setting-item clickable" @click="toggleTheme">
         <span>主题设置</span>
         <span>{{ isDark ? '夜间模式 🌙' : '日间模式 ☀️' }}</span>
       </div>
@@ -128,10 +150,10 @@ const handleImport = async () => {
       <div class="setting-item clickable danger" @click="resetAll">
         <span>恢复默认设置</span>
         <span>♻️</span>
-      </div>
+      </div> -->
 
       <!-- WebDAV 设置 -->
-      <h2>🔧 WebDAV 设置</h2>
+      <!-- <h2>🔧 WebDAV 设置</h2>
       <input v-model="webdavUrl" placeholder="WebDAV 地址（URL）" />
       <input v-model="webdavUsername" placeholder="WebDAV 用户名" />
       <input v-model="webdavPassword" type="password" placeholder="WebDAV 密码" />
@@ -141,17 +163,126 @@ const handleImport = async () => {
         <p>URL: {{ webdavUrl || '未设置' }}</p>
         <p>用户名: {{ webdavUsername || '未设置' }}</p>
         <p>密码: {{ webdavPassword ? '******' : '未设置' }}</p>
-      </div>
+      </div> -->
 
       <!-- LLM 设置 -->
-      <h2>🤖 LLM 接口设置</h2>
+      <!-- <h2>🤖 LLM 接口设置</h2>
       <input v-model="llmUrl" placeholder="LLM API 地址" />
-      <input v-model="llmToken" placeholder="LLM Token" />
+      <input v-model="llmToken" placeholder="LLM Token" /> -->
     </div>
   </div>
 </template>
 
 <style scoped>
+.display-title {
+  font-weight: bold;
+  margin-left: 5px;
+  margin-top: 5px;
+  opacity: 0.6;
+  margin-bottom: 5px;
+}
+
+.display-item {
+  margin-top: 10px;
+  background-color: #303030;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  transition: 0.15s;
+}
+
+.display-item p {
+  margin-left: 10px;
+  opacity: 0.5;
+  font-size: 0.9em;
+}
+
+.submit-btn {
+  background-color: #107c10;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.15s ease;
+  width: 100%;
+  height: 50px;
+}
+
+.textarea {
+  width: 100%;
+  resize: none;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  background-color: #2a2a2a;
+  color: white;
+  transition: border 0.15s;
+  height: 50px;
+}
+
+.textarea:focus {
+  outline: none;
+  border: 1px solid #107c10;
+}
+
+.textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.area-item-label {
+  background-color: #da3b01;
+  padding: 5px 10px;
+  border-radius: 10px;
+  margin-right: 5px;
+}
+
+.area-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.area-item {
+  background-color: #303030;
+  border-radius: 10px;
+  padding: 10px;
+  height: 55px;
+  display: flex;
+  flex-direction: row;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  font-weight: bold;
+  align-items: center;
+  justify-content: space-between;
+  transition: 0.15s;
+}
+
+.area-item:hover {
+  background-color: #252525;
+}
+
+.content-title {
+  margin-top: 5px;
+  margin-left: 5px;
+  font-size: large;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 10px;
+}
+
+.area {
+  background-color: #353535;
+  width: 90vw;
+  left: 5vw;
+  padding: 15px;
+  border-radius: 10px;
+}
+
 .settings-page {
   min-height: 100vh;
   background-color: #1e1e1e;
@@ -171,112 +302,11 @@ const handleImport = async () => {
   gap: 20px;
 }
 
-h1,
-h2 {
-  font-size: 22px;
+h1 {
+  font-size: 28px;
   font-weight: bold;
-  text-align: center;
   margin-bottom: 10px;
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #2a2a2a;
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 16px;
-}
-
-.clickable {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.clickable:hover {
-  background-color: #3a3a3a;
-}
-
-.danger {
-  color: #ff4d4f;
-}
-
-.danger:hover {
-  background-color: #5a1f1f;
-}
-
-input {
-  padding: 10px;
-  background-color: #2a2a2a;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  width: 100%;
-  font-size: 16px;
-  box-sizing: border-box;
-}
-
-.add-button {
-  background-color: #107c10;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.15s ease;
-  width: 100%;
-}
-
-.add-button:hover {
-  background-color: #0e6a0e;
-}
-
-.avatar-block {
-  flex-direction: column;
-  align-items: center;
-}
-
-.avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: #333;
-  margin-bottom: 10px;
-  position: relative;
-  cursor: pointer;
-}
-
-.avatar input {
-  display: none;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.placeholder {
-  color: #888;
-  font-size: 32px;
-  text-align: center;
-  line-height: 80px;
-}
-
-.username-input {
-  width: 200px;
   text-align: center;
 }
 
-.saved-settings {
-  padding: 15px;
-  background-color: #2a2a2a;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #aaa;
-}
 </style>

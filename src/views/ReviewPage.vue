@@ -167,6 +167,7 @@ onUnmounted(() => {
 }
 
 .chart-item-word {
+  margin-top: 1px;
   text-align: center;
   font-weight: bold;
   font-size: small;
@@ -232,6 +233,7 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   margin-top: 5px;
   margin-left: 5px;
+  margin-right: 5px;
 }
 
 .review-card {
