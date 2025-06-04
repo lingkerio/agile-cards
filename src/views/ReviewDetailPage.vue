@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, onUnmounted } from 'vue';
+import { ref, onMounted, watchEffect, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { SqliteService } from '@/services/sqliteService';
 import { useAppInitStore } from '@/stores/appInitStore'; // 导入 store
@@ -57,7 +57,7 @@ onMounted(() => {
 
 const nextCard = async () => {
   if (selectScore.value === 0) {
-    alert('请为该卡片的记忆情况打分！');
+    await MsgBox('请为该卡片的记忆情况打分！', false);
   } else {
     await sqlite.reviewCards(cards.value[currentLable.value].card_id, selectScore.value);
     totalScore.value += 2 * selectScore.value - 1;
@@ -82,6 +82,39 @@ const changeShowAnswer = () => {
 onUnmounted(() => {
   sqlite.closeDB();
 });
+
+const isConfirmMsg  = ref<boolean>(true);
+const showMessage   = ref<boolean>(false);
+const msgIsSelected = ref<boolean>(false);
+const msgSelection  = ref<boolean>(true);
+const msgContent    = ref<string>('');
+
+const handleMsgCancel = async () => {
+  msgIsSelected.value = true;
+  msgSelection.value  = false;
+  showMessage.value   = false;
+}
+
+const handleMsgConfirm = async () => {
+  msgIsSelected.value = true;
+  msgSelection.value  = true;
+  showMessage.value   = false;
+}
+
+const MsgBox = async (content: string, isConfirm: boolean): Promise<boolean> => {
+  isConfirmMsg.value  = isConfirm;
+  msgContent.value    = content;
+  msgIsSelected.value = false;
+  showMessage.value   = true;
+  return new Promise((resolve) => {
+    const stop = watch(msgIsSelected, (newVal) => {
+      if (newVal === true) {
+        stop(); 
+        resolve(msgSelection.value); 
+      }
+    });
+  });
+}
 </script>
 
 <template>
@@ -147,13 +180,108 @@ onUnmounted(() => {
         </div>
       </transition>
 
-      <div class="return-button" @click="router.back()">
-        < 返回</div>
-      </div>
+      <div class="return-button" @click="router.back()">< 返回</div>
     </div>
+
+    <transition name="slide-horizontal">
+      <div v-if="showMessage" class="message-box">
+        <div class="message-type">{{ isConfirmMsg ? '确认框' : '警告框' }}</div>
+        <div class="message-content">{{ msgContent }}</div>
+        <div class="message-button-bar">
+          <div v-if="isConfirmMsg" class="message-button cancel" @click="handleMsgCancel">取消</div>
+          <div class="message-button confirm" @click="handleMsgConfirm">确认</div>
+        </div>
+      </div>
+    </transition>
+
+  </div>
 </template>
 
 <style scoped>
+/* 进入时，初始状态在左边，透明 */
+.slide-horizontal-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+/* 进入时，结束状态正常显示 */
+.slide-horizontal-enter-to {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 离开时，初始状态正常显示 */
+.slide-horizontal-leave-from {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 离开时，结束状态移动到右边，透明 */
+.slide-horizontal-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 过渡时间和缓动 */
+.slide-horizontal-enter-active,
+.slide-horizontal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.message-button {
+  padding: 5px;
+  width: 30vw;
+  background-color: #353535;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.message-button.confirm:hover {
+  background-color: #0e6a0e;
+}
+
+.message-button.cancel:hover {
+  background-color: #a62d00;
+}
+
+.message-button-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 3vw;
+  justify-content: center;
+}
+
+.message-box {
+  position: fixed;
+  width: 70vw;
+  /* height: 120px; */
+  background-color: #1e1e1e;
+  bottom: 200px;
+  left: 15vw;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0px 5px 15px rgba(10, 10, 10, 1);
+  z-index: 999;
+}
+
+.message-type {
+  text-align: center;
+  margin-top: -6px;
+  font-weight: bold;
+}
+
+.message-content {
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.8);
+  background-color: white;
+  color: black;
+  border-radius: 10px;
+  padding: 15px;
+  font-weight: bold;
+}
+
 .score-button {
   padding: 10px 10px;
   border-radius: 10px;

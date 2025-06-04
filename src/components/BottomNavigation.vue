@@ -74,13 +74,14 @@ const setActiveTab = (tab: string) => {
   left: -1vw;
   bottom: -5px;
   width: 102vw;
-  height: 80px;
+  height: 90px;
   background-color: #2d2d2d;
   display: flex;
   justify-content: space-around;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
   z-index: 9999;
+  padding-bottom: 32px;
 }
 
 .nav-padding {
@@ -93,7 +94,7 @@ const setActiveTab = (tab: string) => {
   width: 100%;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   flex: 1;
   height: 100%;
   color: #999;

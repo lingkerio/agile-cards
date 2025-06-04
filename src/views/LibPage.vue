@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watchEffect, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watchEffect, onUnmounted, watch } from 'vue'
 import TopBar from '@/components/TopBar.vue'
 import webdavService from '@/services/webDavService'
 import { SqliteService } from '@/services/sqliteService'
 import { useAppInitStore } from '@/stores/appInitStore'
 import router from '@/router'
 import cardNotExist from '@/assets/images/cardnotexist.png'
+import syncIcon from '@/assets/icons/sync.svg'
 
 const sqlite = new SqliteService();
 
@@ -140,14 +141,13 @@ const uploadDatabase = async () => {
     
     console.log('数据库上传完成');
     syncMessage.value = '✅ 数据库上传成功！';
+    await MsgBox('数据库上传成功！', false);
     setTimeout(() => {
       showSyncMessage.value = false;
     }, 3000);
   } catch (error) {
     console.error('上传数据库失败:', error);
-    
-    
-    
+    await MsgBox('上传数据库失败: ' + String(error), false);
     // 延长错误信息显示时间
     setTimeout(() => {
       showSyncMessage.value = false;
@@ -198,6 +198,7 @@ const downloadDatabase = async () => {
     console.log('数据重新加载完成');
 
     syncMessage.value = '✅ 数据库下载并导入成功！';
+    await MsgBox('数据库下载并导入成功！', false);
     setTimeout(() => {
       showSyncMessage.value = false;
     }, 3000);
@@ -205,7 +206,7 @@ const downloadDatabase = async () => {
     console.error('下载数据库失败:', error);
     
     // 详细的错误分析和显示
-    let errorMessage = '❌ 下载失败: ';
+    let errorMessage = '下载失败: ';
     let debugInfoArray = [];
     
     if (error instanceof Error) {
@@ -215,19 +216,19 @@ const downloadDatabase = async () => {
       
       // 分析具体错误类型
       if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-        debugInfoArray.push('📡 网络连接问题');
+        debugInfoArray.push('网络连接问题');
         debugInfoArray.push('建议: 检查网络连接状态');
       } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-        debugInfoArray.push('🔐 认证失败');
+        debugInfoArray.push('认证失败');
         debugInfoArray.push('建议: 检查用户名密码配置');
       } else if (error.message.includes('404')) {
-        debugInfoArray.push('📁 文件不存在');
+        debugInfoArray.push('文件不存在');
         debugInfoArray.push('建议: 先上传数据库文件');
       } else if (error.message.includes('timeout')) {
-        debugInfoArray.push('⏰ 下载超时');
+        debugInfoArray.push('下载超时');
         debugInfoArray.push('建议: 检查网络速度');
       } else if (error.message.includes('Close: No available connection')) {
-        debugInfoArray.push('🔌 数据库连接问题');
+        debugInfoArray.push('数据库连接问题');
         debugInfoArray.push('建议: 数据库连接已关闭，正在重新初始化');
       }
       
@@ -246,6 +247,7 @@ const downloadDatabase = async () => {
     
     // 显示主要错误信息
     syncMessage.value = errorMessage;
+    await MsgBox(errorMessage, false);
     
     // 在控制台输出详细调试信息
     console.log('=== 详细调试信息 ===');
@@ -270,9 +272,9 @@ const toggleSyncOptions = () => {
 };
 
 const submitDel = async () => {
-  if (window.confirm('确定要删除该卡片组吗？')) {
+  if (await MsgBox('确定要删除该卡片组吗？', true)) {
     if (searchGroup.value?.title === '默认') {
-      alert('您无法删除默认分组!');
+      await MsgBox('您无法删除默认分组!', false);
     } else {
       await sqlite.dropGroupByID(searchGroup.value?.id ?? 0);
       await sqlite.closeDB();
@@ -293,18 +295,21 @@ const changeIsFix = () => {
 }
 
 const submitFix = async () => {
-  if (window.confirm('您确认提交修改吗？')) {
+  if (await MsgBox('您确认提交修改吗？', true)) {
     if (searchGroup.value?.title === '默认') {
-      alert('您无法删修改默认分组!');
+      await MsgBox('您无法删修改默认分组!', false);
     } else {
-      // console.log('fix', fixTitle.value, fixDescription.value);
-      const submitGroup = {
-        group_id: searchGroup.value?.id,
-        group_name: fixTitle.value,
-        group_dis: fixDescription.value
-      };
-      await sqlite.updateGroupOfID(submitGroup);
-      router.push('/home');
+      if (fixTitle.value === '') {
+        await MsgBox('请输入分组名！!', false);
+      } else {
+        const submitGroup = {
+          group_id: searchGroup.value?.id,
+          group_name: fixTitle.value,
+          group_dis: fixDescription.value
+        };
+        await sqlite.updateGroupOfID(submitGroup);
+        router.push('/home');
+      }
     }
   }
 }
@@ -316,18 +321,37 @@ const jumpGroup = (group_name: string) => {
   searchQuery.value = "group::" + group_name;
 }
 
-// 复制调试信息到剪贴板
-const copyToClipboard = async (text: string) => {
-  try {
-    if (window.navigator?.clipboard) {
-      await window.navigator.clipboard.writeText(text);
-      console.log('调试信息已复制到剪贴板');
-    } else {
-      console.log('剪贴板API不可用');
-    }
-  } catch (error) {
-    console.error('复制失败:', error);
-  }
+const isConfirmMsg  = ref<boolean>(true);
+const showMessage   = ref<boolean>(false);
+const msgIsSelected = ref<boolean>(false);
+const msgSelection  = ref<boolean>(true);
+const msgContent    = ref<string>('');
+
+const handleMsgCancel = async () => {
+  msgIsSelected.value = true;
+  msgSelection.value  = false;
+  showMessage.value   = false;
+}
+
+const handleMsgConfirm = async () => {
+  msgIsSelected.value = true;
+  msgSelection.value  = true;
+  showMessage.value   = false;
+}
+
+const MsgBox = async (content: string, isConfirm: boolean): Promise<boolean> => {
+  isConfirmMsg.value  = isConfirm;
+  msgContent.value    = content;
+  msgIsSelected.value = false;
+  showMessage.value   = true;
+  return new Promise((resolve) => {
+    const stop = watch(msgIsSelected, (newVal) => {
+      if (newVal === true) {
+        stop(); 
+        resolve(msgSelection.value); 
+      }
+    });
+  });
 }
 </script>
 
@@ -347,8 +371,9 @@ const copyToClipboard = async (text: string) => {
       </div>
     </div>
 
+    
     <div class="cards-grid">
-
+      
       <transition name="fade">
         <div v-if="isSearchGroup" class="group-control">
           <div class="group-control-wrapper">
@@ -392,54 +417,166 @@ const copyToClipboard = async (text: string) => {
     <!-- 修改后的WebDAV同步按钮 - 移到lib-page内部 -->
     <div class="webdav-sync-container">
       <!-- 同步选项菜单 -->
-      <div v-if="showSyncOptions" class="sync-options">
-        <button @click="uploadDatabase" class="sync-option-btn" :disabled="isUploading || isDownloading">
-          <span class="sync-icon">↑</span>
-          上传数据库
-        </button>
-        <button @click="downloadDatabase" class="sync-option-btn" :disabled="isUploading || isDownloading">
-          <span class="sync-icon">↓</span>
-          下载数据库
-        </button>
-      </div>
+      <transition name="slide-up">
+        <div v-if="showSyncOptions" class="sync-options">
+          <button @click="uploadDatabase" class="sync-option-btn" :disabled="isUploading || isDownloading">
+            <span class="sync-icon">↑</span>
+            上传数据库
+          </button>
+          <button @click="downloadDatabase" class="sync-option-btn" :disabled="isUploading || isDownloading">
+            <span class="sync-icon">↓</span>
+            下载数据库
+          </button>
+        </div>
+      </transition>
+    </div>
 
       <!-- 主同步按钮 -->
-      <button @click="toggleSyncOptions" class="webdav-sync-btn" :class="{ 'active': showSyncOptions }">
-        <span class="sync-icon">⇅</span>
-      </button>
-    </div>
-
-    <!-- 同步消息提示 - 移到lib-page内部 -->
-    <div v-if="showSyncMessage" class="sync-message">
-      {{ syncMessage }}
-      <div v-if="showDebugInfo && debugInfo.length > 0" class="debug-toggle">
-        <button @click="showDebugInfo = !showDebugInfo" class="debug-btn">
-          {{ showDebugInfo ? '隐藏' : '显示' }}详细信息
-        </button>
+    <button @click="toggleSyncOptions" class="webdav-sync-btn" :class="{ 'active': showSyncOptions }">
+      <div class="async-btn-container">
+        <img :src="syncIcon">
       </div>
-    </div>
+    </button>
 
-    <!-- 调试信息面板 -->
-    <div v-if="showSyncMessage && showDebugInfo && debugInfo.length > 0" class="debug-panel">
-      <div class="debug-header">
-        <h4>🔍 详细调试信息</h4>
-        <button @click="showDebugInfo = false" class="close-debug">×</button>
-      </div>
-      <div class="debug-content">
-        <div v-for="(info, index) in debugInfo" :key="index" class="debug-item">
-          <span class="debug-index">{{ index + 1 }}.</span>
-          <span class="debug-text">{{ info }}</span>
+    <transition name="slide-horizontal">
+      <div v-if="showMessage" class="message-box">
+        <div class="message-type">{{ isConfirmMsg ? '确认框' : '警告框' }}</div>
+        <div class="message-content">{{ msgContent }}</div>
+        <div class="message-button-bar">
+          <div v-if="isConfirmMsg" class="message-button cancel" @click="handleMsgCancel">取消</div>
+          <div class="message-button confirm" @click="handleMsgConfirm">确认</div>
         </div>
       </div>
-      <div class="debug-actions">
-        <button @click="debugInfo = []; showDebugInfo = false;" class="clear-debug">清除信息</button>
-        <button @click="copyToClipboard(debugInfo.join('\n'))" class="copy-debug">复制到剪贴板</button>
-      </div>
-    </div>
+    </transition>
+
   </div>
 </template>
 
 <style scoped>
+/* 进入时，初始状态在左边，透明 */
+.slide-horizontal-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+/* 进入时，结束状态正常显示 */
+.slide-horizontal-enter-to {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 离开时，初始状态正常显示 */
+.slide-horizontal-leave-from {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 离开时，结束状态移动到右边，透明 */
+.slide-horizontal-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 过渡时间和缓动 */
+.slide-horizontal-enter-active,
+.slide-horizontal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.message-button {
+  padding: 5px;
+  width: 30vw;
+  background-color: #353535;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.message-button.confirm:hover {
+  background-color: #0e6a0e;
+}
+
+.message-button.cancel:hover {
+  background-color: #a62d00;
+}
+
+.message-button-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 3vw;
+  justify-content: center;
+}
+
+.message-box {
+  position: fixed;
+  width: 70vw;
+  /* height: 120px; */
+  background-color: #1e1e1e;
+  bottom: 200px;
+  left: 15vw;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0px 5px 15px rgba(10, 10, 10, 1);
+}
+
+.message-type {
+  text-align: center;
+  margin-top: -6px;
+  font-weight: bold;
+}
+
+.message-content {
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.8);
+  background-color: white;
+  color: black;
+  border-radius: 10px;
+  padding: 15px;
+  font-weight: bold;
+}
+
+/* 进入时，初始状态在底部，透明 */
+.slide-up-enter-from {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+/* 进入时，结束状态正常显示 */
+.slide-up-enter-to {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 离开时，初始状态正常显示 */
+.slide-up-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 离开时，结束状态往底部移动并透明 */
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+/* 过渡时间和缓动 */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.async-btn-container {
+  width: 35px;
+  height: 35px;
+}
+
+.async-btn-container img {
+  width: 100%;
+  height: 100%;
+  filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.15s ease-in-out;
@@ -862,8 +999,8 @@ const copyToClipboard = async (text: string) => {
 /* 修改WebDAV同步按钮样式 */
 .webdav-sync-container {
   position: fixed;
-  bottom: 80px;
-  right: 20px;
+  bottom: 75px;
+  right: 100px;
   z-index: 999;
   display: flex;
   flex-direction: column;
@@ -887,6 +1024,7 @@ const copyToClipboard = async (text: string) => {
   cursor: pointer;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.15s ease;
+  padding: 10px;
 }
 
 .webdav-sync-btn:hover {
@@ -901,16 +1039,17 @@ const copyToClipboard = async (text: string) => {
 
 .sync-options {
   position: absolute;
-  bottom: 70px;
+  bottom: 0px;
   right: 0;
   background-color: #2d2d2d;
   border-radius: 8px;
   padding: 8px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   margin-bottom: 10px;
+  border-radius: 10px;
 }
 
 .sync-option-btn {
@@ -925,11 +1064,16 @@ const copyToClipboard = async (text: string) => {
   cursor: pointer;
   transition: background-color 0.15s;
   white-space: nowrap;
+  border-radius: 10px;
 }
 
-.sync-option-btn:hover:not(:disabled) {
-  background-color: #4a4a4a;
+.sync-option-btn:hover {
+  background-color: #da3b01;
 }
+
+/* .sync-option-btn:hover:not(:disabled) {
+  background-color: #4a4a4a;
+} */
 
 .sync-option-btn:disabled {
   opacity: 0.5;

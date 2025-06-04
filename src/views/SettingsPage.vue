@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watchEffect } from 'vue';
+import { ref, onMounted, onUnmounted, watchEffect, watch } from 'vue';
 import { SqliteService } from '@/services/sqliteService';
 import { useAppInitStore } from '@/stores/appInitStore'; 
 import type { DavConfig, LLMConfig } from '@/services/sqliteService';
@@ -56,6 +56,7 @@ const submit_dav = async () => {
     username: submit_webdav_username.value,
     password: submit_webdav_password.value
   };
+  console.log('Auth token:', btoa(`${submit_webdav_username.value}:${submit_webdav_password.value}`));
   await sqlite.saveDavConfig(dav_conf);
   await loadConfig();
 }
@@ -71,13 +72,63 @@ const submit_llm = async () => {
 }
 
 const clean_data = async () => {
-  await sqlite.deleteData();
-  await loadConfig();
+  if (await MsgBox('您确定要清除本地所有卡片和卡片库吗？', true)) {
+    await sqlite.deleteData();
+    await loadConfig();
+  }
 }
 
 const clean_conf = async () => {
-  await sqlite.deleteConf();
+  if (await MsgBox('您确定要清除本地所有 WebDAV 和 LLM API 配置吗？', true)) {
+    await sqlite.deleteConf();
+    await loadConfig();
+  }
+}
+
+const sqlString = ref<string>('');
+const sqlMessage = ref<string>('');
+
+const exportSQL = async () => {
+  sqlString.value = await sqlite.exportToSQL();
+}
+
+const importSQL = async () => {
+  const result = await sqlite.importFromSQL(sqlString.value);
+  sqlMessage.value = result.message ?? '';
   await loadConfig();
+}
+
+const isConfirmMsg  = ref<boolean>(true);
+const showMessage   = ref<boolean>(false);
+const msgIsSelected = ref<boolean>(false);
+const msgSelection  = ref<boolean>(true);
+const msgContent    = ref<string>('');
+
+const handleMsgCancel = async () => {
+  msgIsSelected.value = true;
+  msgSelection.value  = false;
+  showMessage.value   = false;
+}
+
+const handleMsgConfirm = async () => {
+  msgIsSelected.value = true;
+  msgSelection.value  = true;
+  showMessage.value   = false;
+}
+
+const MsgBox = async (content: string, isConfirm: boolean): Promise<boolean> => {
+  isConfirmMsg.value  = isConfirm;
+  msgContent.value    = content;
+  msgIsSelected.value = false;
+  showMessage.value   = true;
+  return new Promise((resolve) => {
+    const stop = watch(msgIsSelected, (newVal) => {
+      if (newVal === true) {
+        stop(); 
+        resolve(msgSelection.value); 
+      }
+    });
+  });
 }
 </script>
 
@@ -104,7 +155,7 @@ const clean_conf = async () => {
       <div class="area">
         <div class="content-title">WebDAV 设置</div>
         <div class="area-bar">
-          <input v-model="submit_webdav_address" class="textarea" placeholder="请输入 WebDAV 地址"></input>
+          <input v-model="submit_webdav_address"  class="textarea" placeholder="请输入 WebDAV 地址"></input>
           <input v-model="submit_webdav_username" class="textarea" placeholder="请输入 WebDAV 账号"></input>
           <input v-model="submit_webdav_password" class="textarea" placeholder="请输入 WebDAV 密码"></input>
           <button class="submit-btn" @click="submit_dav">确认修改</button>
@@ -136,44 +187,136 @@ const clean_conf = async () => {
           </div>
         </div>
       </div>
-      <!-- 通用设置项 -->
-      <!-- <div class="setting-item clickable" @click="toggleTheme">
-        <span>主题设置</span>
-        <span>{{ isDark ? '夜间模式 🌙' : '日间模式 ☀️' }}</span>
+
+      <div class="area">
+        <div class="content-title">SQL 测试</div>
+        <div class="area-bar">
+          <div class="button-bar">
+            <div class="area-button" @click="exportSQL">导出 SQL</div>
+            <div class="area-button" @click="importSQL">导入 SQL</div>
+          </div>
+          <textarea v-model="sqlString" class="textarea-resize" placeholder="SQL 语句" rows="12"></textarea>
+          <textarea v-model="sqlMessage" class="textarea-resize" placeholder="返回信息" rows="12"></textarea>
+        </div>
       </div>
-
-      <div class="setting-item clickable" @click="clearCache">
-        <span>清除缓存与本地配置</span>
-        <span>🧹</span>
-      </div>
-
-      <div class="setting-item clickable danger" @click="resetAll">
-        <span>恢复默认设置</span>
-        <span>♻️</span>
-      </div> -->
-
-      <!-- WebDAV 设置 -->
-      <!-- <h2>🔧 WebDAV 设置</h2>
-      <input v-model="webdavUrl" placeholder="WebDAV 地址（URL）" />
-      <input v-model="webdavUsername" placeholder="WebDAV 用户名" />
-      <input v-model="webdavPassword" type="password" placeholder="WebDAV 密码" />
-      <button class="add-button" @click="saveWebDAVSettings">保存设置</button>
-
-      <div v-if="webdavUrl || webdavUsername" class="saved-settings">
-        <p>URL: {{ webdavUrl || '未设置' }}</p>
-        <p>用户名: {{ webdavUsername || '未设置' }}</p>
-        <p>密码: {{ webdavPassword ? '******' : '未设置' }}</p>
-      </div> -->
-
-      <!-- LLM 设置 -->
-      <!-- <h2>🤖 LLM 接口设置</h2>
-      <input v-model="llmUrl" placeholder="LLM API 地址" />
-      <input v-model="llmToken" placeholder="LLM Token" /> -->
     </div>
+
+    <transition name="slide-horizontal">
+      <div v-if="showMessage" class="message-box">
+        <div class="message-type">{{ isConfirmMsg ? '确认框' : '警告框' }}</div>
+        <div class="message-content">{{ msgContent }}</div>
+        <div class="message-button-bar">
+          <div v-if="isConfirmMsg" class="message-button cancel" @click="handleMsgCancel">取消</div>
+          <div class="message-button confirm" @click="handleMsgConfirm">确认</div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
 <style scoped>
+/* 进入时，初始状态在左边，透明 */
+.slide-horizontal-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+/* 进入时，结束状态正常显示 */
+.slide-horizontal-enter-to {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 离开时，初始状态正常显示 */
+.slide-horizontal-leave-from {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 离开时，结束状态移动到右边，透明 */
+.slide-horizontal-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 过渡时间和缓动 */
+.slide-horizontal-enter-active,
+.slide-horizontal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.message-button {
+  padding: 5px;
+  width: 30vw;
+  background-color: #353535;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.message-button.confirm:hover {
+  background-color: #0e6a0e;
+}
+
+.message-button.cancel:hover {
+  background-color: #a62d00;
+}
+
+.message-button-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 3vw;
+  justify-content: center;
+}
+
+.message-box {
+  position: fixed;
+  width: 70vw;
+  /* height: 120px; */
+  background-color: #1e1e1e;
+  bottom: 200px;
+  left: 15vw;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0px 5px 15px rgba(10, 10, 10, 1);
+}
+
+.message-type {
+  text-align: center;
+  margin-top: -6px;
+  font-weight: bold;
+}
+
+.message-content {
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.8);
+  background-color: white;
+  color: black;
+  border-radius: 10px;
+  padding: 15px;
+  font-weight: bold;
+}
+
+.area-button {
+  padding: 10px 15px;
+  background-color: #2a2a2a;
+  border-radius: 10px;
+}
+
+.area-button:hover {
+  background-color: #932700;
+}
+
+.button-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
 .display-title {
   font-weight: bold;
   margin-left: 5px;
@@ -209,6 +352,27 @@ const clean_conf = async () => {
   transition: 0.15s ease;
   width: 100%;
   height: 50px;
+}
+
+.textarea-resize {
+  width: 100%;
+  resize: none;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  background-color: #2a2a2a;
+  color: white;
+  transition: border 0.15s;
+}
+
+.textarea-resize:focus {
+  outline: none;
+  border: 1px solid #107c10;
+}
+
+.textarea-resize::-webkit-scrollbar {
+  display: none;
 }
 
 .textarea {

@@ -31,3 +31,4 @@ coverage
 
 # config
 config.ts
+app-config.yaml

@@ -1,16 +1,19 @@
 import { OpenAI } from "openai";
-import { CONFIG } from "../config/config";
+import { SqliteService } from "./sqliteService";
+import type { LLMConfig } from "./sqliteService";
+import { ref } from "vue";
 
-const openai = new OpenAI({
-  // apiKey: CONFIG.OPENAI_API_KEY,
-  // baseURL: CONFIG.BASE_URL,
-  dangerouslyAllowBrowser: true,
-  baseURL: 'https://api.deepseek.com',
-  apiKey: 'sk-cf6bc21f18a84f61b1515ee2d41028a0'
-});
+const sqlite = new SqliteService();
 
 export async function getOpenAIResponse(prompt: string): Promise<string> {
   try {
+    const llmConf = await sqlite.getLLMConfig();
+    const openai = new OpenAI({
+      dangerouslyAllowBrowser: true,
+      baseURL: llmConf.address,
+      apiKey: llmConf.token
+    });
+
     const response = await openai.chat.completions.create({
       // model: "Qwen/Qwen2.5-7B-Instruct",
       model: "deepseek-chat",
@@ -24,6 +27,6 @@ export async function getOpenAIResponse(prompt: string): Promise<string> {
     return response.choices[0]?.message?.content || "没有返回结果";
   } catch (error) {
     console.error("OpenAI 请求失败:", error);
-    return "请求出错";
+    return "请求出错: " + String(error);
   }
 }

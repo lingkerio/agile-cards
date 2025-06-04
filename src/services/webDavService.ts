@@ -40,7 +40,6 @@
  */
 
 import { Capacitor } from '@capacitor/core'
-import { CONFIG } from '../config/config'
 import { SqliteService } from './sqliteService'
 
 // 超时设置
@@ -170,17 +169,22 @@ const webdavService: WebDAVService = {
     remotePath: string,
     contentType: string = 'text/plain',
   ): Promise<void> {
-    const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
+    const sqlite = new SqliteService();
+    const davConfig = await sqlite.getDavConfig();
+    if (davConfig.address === '') throw 'WebDAV 地址为空';
+
+    const absoluteUrl = `${davConfig.address}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
     console.log(`开始上传到WebDAV: ${absoluteUrl}`)
     console.log(`文件大小: ${content.length} 字节`)
     console.log(`内容类型: ${contentType}`)
-    console.log(`认证令牌前缀: ${CONFIG.WEBDAV_AUTH_TOKEN.substring(0, 10)}...`)
+    const auth_token = btoa(`${davConfig.username}:${davConfig.password}`);
+    console.log(`认证令牌前缀: ${auth_token.substring(0, 10)}...`)
 
     // 使用XMLHttpRequest方法（基于可工作的版本）
     try {
       const xhr = new XMLHttpRequest()
       xhr.open('PUT', absoluteUrl, true)
-      xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
+      xhr.setRequestHeader('Authorization', `Basic ${auth_token}`)
       xhr.setRequestHeader('Content-Type', contentType)
       xhr.timeout = DEFAULT_TIMEOUT
 
@@ -282,15 +286,20 @@ const webdavService: WebDAVService = {
 
   // 使用XMLHttpRequest从WebDAV下载文件
   async downloadFileFromWebDAV(remotePath: string): Promise<any> {
-    const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
+    const sqlite = new SqliteService();
+    const davConfig = await sqlite.getDavConfig();
+    if (davConfig.address === '') throw 'WebDAV 地址为空';
+
+    const absoluteUrl = `${davConfig.address}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
     console.log(`开始从WebDAV下载: ${absoluteUrl}`)
-    console.log(`认证令牌前缀: ${CONFIG.WEBDAV_AUTH_TOKEN.substring(0, 10)}...`)
+    const auth_token = btoa(`${davConfig.username}:${davConfig.password}`);
+    console.log(`认证令牌前缀: ${auth_token.substring(0, 10)}...`)
 
     // 使用XMLHttpRequest方法（基于可工作的版本）
     try {
       const xhr = new XMLHttpRequest()
       xhr.open('GET', absoluteUrl, true)
-      xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
+      xhr.setRequestHeader('Authorization', `Basic ${auth_token}`)
       xhr.responseType = 'text'
       xhr.timeout = DEFAULT_TIMEOUT
 

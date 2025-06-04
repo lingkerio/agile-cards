@@ -28,19 +28,19 @@ const props = defineProps<{
 
 <template>
   <div class="top-bar">
-    <div class="user-info">
-      <div class="avatar">
-        <img :src="avatorHoldPlace" alt="User Avatar" />
+      <div class="user-info">
+        <div class="avatar">
+          <img :src="avatorHoldPlace" alt="User Avatar" />
+        </div>
+        <div class="info">
+          <div class="infomation">{{ props.info }}</div>
+          <div class="status">{{ props.status }}</div>
+        </div>
       </div>
-      <div class="info">
-        <div class="infomation">{{ props.info }}</div>
-        <div class="status">{{ props.status }}</div>
+      <div class="card-info" @click="router.push('/lib')">
+        <div class="card-count">{{ card_num }} 张卡片</div>
       </div>
     </div>
-    <div class="card-info" @click="router.push('/lib')">
-      <div class="card-count">{{ card_num }} 张卡片</div>
-    </div>
-  </div>
 </template>
 
 <style scoped>
@@ -54,6 +54,7 @@ const props = defineProps<{
   justify-content: space-between;
   align-items: center;
   padding: 0 5vw;
+  padding-top: 20px;
   z-index: 50;
   transition: background-color 0.15s ease;
   background-color: #1e1e1e;
