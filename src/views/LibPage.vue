@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watchEffect } from 'vue'
+import { ref, computed, onMounted, watchEffect, onUnmounted } from 'vue'
 import TopBar from '@/components/TopBar.vue'
 import webdavService from '@/services/webDavService'
 import databaseService from '@/services/__databaseService.ts'
@@ -108,6 +108,10 @@ onMounted(() => {
     }
   });
 })
+
+onUnmounted(() => {
+  sqlite.closeDB();
+});
 
 const handleWebDAVSync = () => {
   // console.log('点击了 WebDAV 同步按钮（预留）');
@@ -530,11 +534,23 @@ const jumpGroup = (group_name: string) => {
   position: fixed;
   top: 10vh;
   width: 100vw;
-  height: 7vh;
+  height: 6vh;
   /* margin-left: -20px; */
   background-color: #1e1e1e;
   z-index: 10;
   padding-bottom: 2vh;
+}
+
+.controls::after {
+  content: "";
+  position: fixed;
+  top: calc(10vh + 6vh - 3px); /* controls 底部位置 */
+  left: 0;
+  width: 100vw;
+  height: 2vh; /* 渐变高度，可自定义 */
+  pointer-events: none; /* 不影响鼠标事件 */
+  background: linear-gradient(to top, rgba(30, 30 ,30, 0), #1e1e1e);
+  z-index: 9; /* 确保在 .controls 下面 */
 }
 
 .search-container {
@@ -747,7 +763,7 @@ const jumpGroup = (group_name: string) => {
 
 .webdav-sync-btn {
   position: fixed;
-  bottom: 90px;
+  bottom: 100px;
   right: 5vw;
   width: 70px;
   height: 70px;

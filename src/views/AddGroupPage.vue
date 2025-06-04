@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { SqliteService } from '@/services/sqliteService';
 import type { Group } from '@/services/sqliteService';
@@ -31,6 +31,10 @@ const handleSubmit = async () => {
     router.push('/home');
   }
 };
+
+onUnmounted(() => {
+  sqlite.closeDB();
+});
 </script>
 
 <template>

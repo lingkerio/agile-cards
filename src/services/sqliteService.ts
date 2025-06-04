@@ -150,7 +150,10 @@ export class SqliteService {
   async getRecord(): Promise<Record[]> {
     if (!this.db) await this.initDB();
     if (!this.db) throw new Error('Database not initialized.');
-    const result = await this.db.query(`SELECT * FROM \`Record\`;`);
+    const result = await this.db.query(`
+      SELECT record_id, avg_score FROM \`Record\`
+      ORDER BY record_id DESC LIMIT 7;
+    `);
     return result.values as Record[];
   }
 

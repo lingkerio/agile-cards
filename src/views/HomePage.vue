@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watchEffect } from 'vue';
+import { ref, onMounted, watchEffect, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import TopBar from '@/components/TopBar.vue';
 import CardView from '@/components/CardView.vue';
@@ -7,6 +7,8 @@ import AddButton from '@/components/AddButton.vue';
 import { SqliteService } from '@/services/sqliteService';
 import { useAppInitStore } from '@/stores/appInitStore'; // 导入 store
 import { groupIMG } from '@/services/placeholder';
+import leftArrow from '@/assets/icons/arrow/left.svg'
+import rightArrow from '@/assets/icons/arrow/right.svg'
 
 const router = useRouter();
 const cardGroups = ref<CardGroup[]>([]);
@@ -70,6 +72,10 @@ onMounted(() => {
     }
   });
 });
+
+onUnmounted(() => {
+  sqlite.closeDB();
+});
 </script>
 
 <template>
@@ -80,7 +86,11 @@ onMounted(() => {
       <div class="title">卡片组列表</div>
 
       <div class="card-switch-container" v-if="cardGroups.length">
-        <button class="arrow left" @click="prevCard" :disabled="currentIndex === 0">‹</button>
+        <button class="arrow left" @click="prevCard" :disabled="currentIndex === 0">
+          <div class="icon">
+            <img :src="leftArrow" alt="leftArrow">
+          </div>
+        </button>
 
         <transition name="fade" mode="out-in">
           <div class="card-wrapper" :key="cardGroups[currentIndex].id">
@@ -89,7 +99,11 @@ onMounted(() => {
           </div>
         </transition>
 
-        <button class="arrow right" @click="nextCard" :disabled="currentIndex === cardGroups.length - 1">›</button>
+        <button class="arrow right" @click="nextCard" :disabled="currentIndex === cardGroups.length - 1">
+          <div class="icon">
+            <img :src="rightArrow" alt="rightArrow">
+          </div>
+        </button>
       </div>
 
       <!-- 分页圆点指示器 -->
@@ -104,6 +118,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.icon {
+  width: 25px;
+  height: 25px;
+  color: #ffffff;
+}
+
+.icon img {
+  width: 100%;
+  height: 100%;
+  filter: brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+}
+
 .home-page {
   min-height: 100vh;
   color: white;
@@ -142,8 +168,9 @@ onMounted(() => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0 16px;
+  padding: 0 8px;
   transition: opacity 0.15s ease;
+  opacity: 1;
 }
 
 .arrow:disabled {

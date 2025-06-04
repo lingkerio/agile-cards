@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, watchEffect } from 'vue';
+import { ref, onMounted, watchEffect, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import TopBar from '@/components/TopBar.vue';
 import { SqliteService } from '@/services/sqliteService';
 import { useAppInitStore } from '@/stores/appInitStore'; // 导入 store
 
@@ -79,6 +78,10 @@ const selectScore = ref<number>(0);
 const changeShowAnswer = () => {
   showAnswer.value = !showAnswer.value;
 }
+
+onUnmounted(() => {
+  sqlite.closeDB();
+});
 </script>
 
 <template>

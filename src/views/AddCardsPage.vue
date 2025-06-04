@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { SqliteService } from '@/services/sqliteService';
 import type { Group, Cards } from '@/services/sqliteService';
@@ -65,6 +65,10 @@ onMounted(async () => {
     // console.log('DB not yet initialized, watchEffect is waiting...');
   }
 })
+
+onUnmounted(() => {
+  sqlite.closeDB();
+});
 </script>
 
 <template>

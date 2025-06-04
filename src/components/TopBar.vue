@@ -14,6 +14,10 @@
 // onUnmounted(() => {
 //   window.removeEventListener('scroll', handleScroll);
 // });
+import avatorHoldPlace from '@/assets/images/avatar.svg'
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const props = defineProps<{
   info:     string;
@@ -26,14 +30,14 @@ const props = defineProps<{
   <div class="top-bar">
     <div class="user-info">
       <div class="avatar">
-        <img src="@/assets/images/avatar.svg" alt="User Avatar" />
+        <img :src="avatorHoldPlace" alt="User Avatar" />
       </div>
       <div class="info">
         <div class="infomation">{{ props.info }}</div>
         <div class="status">{{ props.status }}</div>
       </div>
     </div>
-    <div class="card-info">
+    <div class="card-info" @click="router.push('/lib')">
       <div class="card-count">{{ card_num }} 张卡片</div>
     </div>
   </div>
@@ -107,10 +111,17 @@ const props = defineProps<{
   align-items: center;    
   justify-content: center;
   text-align: center;
+  transition: 0.15s;
+}
+
+.card-info:hover {
+  background-color: #303030;
 }
 
 .card-count {
   color: white;
   font-size: 14px;
 }
+
+
 </style>

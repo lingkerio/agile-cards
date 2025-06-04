@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, watch } from 'vue';
+import { ref, onMounted, watchEffect, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import TopBar from '@/components/TopBar.vue';
 import { SqliteService } from '@/services/sqliteService';
@@ -34,7 +34,8 @@ async function loadReviewCards() {
     reviewRecords.value = (await sqlite.getRecord()).map(r => ({
       record_id: r.record_id,
       avg_score: r.avg_score
-    }));
+    })).reverse();
+    console.log('Review Records:', reviewRecords.value);
     const reviewCards = await sqlite.getReviewCards();
     cards.value = await Promise.all(reviewCards.map(async card => ({
       card_id: card.card_id ?? 0,
@@ -59,7 +60,6 @@ const cardsNum = ref<number>(0);
 onMounted(() => {
   document.title = 'Cards - Home Page';
   // console.log('Component mounted. Waiting for DB initialization...');
-  renderChart();
 
   watchEffect(async () => {
     if (appInit.isDbInitialized) {
@@ -73,60 +73,40 @@ onMounted(() => {
   });
 });
 
-watch(reviewRecords, () => {
-  renderChart()
-})
-
-import * as echarts from 'echarts';
-const chartRef = ref<HTMLDivElement | null>(null)
-let chart: echarts.ECharts | null = null
-
-function getChartData() {
-  const sorted = [...reviewRecords.value].sort((a, b) => a.record_id - b.record_id)
-  const last20 = sorted.slice(-7)
-  const xData = last20.map(item => item.record_id)
-  const yData = last20.map(item => item.avg_score)
-  return { xData, yData }
-}
-
-function renderChart() {
-  if (!chartRef.value) return
-  if (!chart) {
-    chart = echarts.init(chartRef.value)
-  }
-  const { xData, yData } = getChartData()
-  const option = {
-    title: { text: '最近 20 条记录折线图' },
-    tooltip: {},
-    xAxis: {
-      type: 'category',
-      data: xData,
-      name: 'record_id'
-    },
-    yAxis: {
-      type: 'value',
-      name: 'avg_score'
-    },
-    series: [
-      {
-        data: yData,
-        type: 'line',
-        smooth: true,
-        symbol: 'circle'
-      }
-    ]
-  }
-  chart.setOption(option)
-}
+onUnmounted(() => {
+  sqlite.closeDB();
+});
 </script>
 
 <template>
   <div class="home-page">
     <TopBar :info="'复习'" :status="cards.length + ' 张卡片待复习'" :card_num="cardsNum" />
+    <div class="topbar-shadow"></div>
 
     <div class="page-list">
+
       <div class="title">复习总结</div>
-      <div ref="chartRef" style="width: 300px; height: 200px;"></div>
+      <div class="review-summary">
+        <div v-if="reviewRecords.length">
+          <div class="content-title">近 <span style="color: #ffffff;"> {{ reviewRecords.length }} </span> 次复习情况。</div> 
+          <div class="chart-wrapper">
+            <div v-for="record in reviewRecords" class="chart-item">
+              <transition name="fade">
+                <div class="chart-item-up"></div>
+              </transition>
+              <transition name="fade">
+                <div class="chart-item-dn" :style="{ height: (record.avg_score / 5.0 * 100) + '%' }">
+                  <div class="chart-item-word"> {{ record.avg_score.toFixed(1) }} </div>
+                </div>
+              </transition>
+            </div>
+          </div>
+        </div>
+        <div v-if="!reviewRecords.length">
+          <div class="content-title">当前不存在复习记录。</div> 
+        </div>
+      </div>
+    
       <div class="title">待复习</div>
       <div class="await-review" v-if="cards.length != 0">
         <div class="content-title">
@@ -165,6 +145,69 @@ function renderChart() {
 </template>
 
 <style scoped>
+.topbar-shadow {
+  position: fixed;
+  background-color: red;
+  width: 100vw;
+  height: 2vh;
+  top: calc(10vh - 3px);
+  background: linear-gradient(to top, rgba(30, 30 ,30, 0), #1e1e1e);
+}
+
+.chart-item-up {
+  width: 100%;
+  flex-grow: 1;
+}
+
+.chart-item-dn {
+  width: 100%;
+  background-color: #c83500;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.chart-item-word {
+  text-align: center;
+  font-weight: bold;
+  font-size: small;
+  opacity: 0.8;
+}
+
+.chart-item {
+  flex: 1 1 0;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #932700;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.chart-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  gap: 10px;
+  background-color: #303030;
+  padding: 15px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.review-summary {
+  background-color: #353535;
+  width: 90vw;
+  margin-left: 5vw;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
 .group-label {
   width: 100%;
   background-color: #da3b01;
@@ -224,6 +267,7 @@ function renderChart() {
   border-radius: 10px;
   background-color: #107c10;
   padding: 6px 10px;
+  font-weight: bold;
 }
 
 .review-btn:hover {
@@ -256,7 +300,8 @@ function renderChart() {
 }
 
 .page-list {
-  padding: 10vh 0 0;
+  padding-top: 10vh;
+  padding-bottom: 20px;
 }
 
 .title {
