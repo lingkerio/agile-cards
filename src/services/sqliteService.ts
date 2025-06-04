@@ -490,19 +490,15 @@ export class SqliteService {
       return { changes: -1, message: 'Import failed: Database not initialized.' };
     }
 
+    console.log('=== 开始数据库导入过程 ===');
+    console.log(`SQL脚本长度: ${sqlScript.length} 字符`);
+    console.log(`SQL脚本内容:\n${sqlScript}`);
+
     try {
       // --- BEGINNING OF ADDED CLEARING LOGIC ---
-      // console.warn('Attempting to clear existing data before import...');
+      console.log('步骤1: 清除现有数据...');
 
-      // Clear tables in reverse order of dependency or rely on CASCADE
-      // Since Cards has ON DELETE CASCADE for group_id, deleting Groups will also delete associated Cards.
-      // However, deleting Cards explicitly first is also safe and perhaps clearer.
-      // Record table is independent.
-
-      // It's often safer to wrap clearing and importing in a single transaction
-      // although executeSet might handle its own transaction internally.
-      // Let's try running DELETEs first. If they fail, import won't proceed.
-
+      // Clear tables in reverse order of dependency
       await this.db.run('DELETE FROM `Record`;');
       console.log('Cleared Record table.');
       await this.db.run('DELETE FROM `Cards`;'); // Clear cards first
@@ -530,14 +526,19 @@ export class SqliteService {
 
       // Check if the default group exists after import, if not, add it (extra safety)
       const defaultGroupCheck = await this.db.query(`SELECT group_id FROM \`Group\` WHERE group_name = ?;`, ['默认']);
-        if (!defaultGroupCheck.values || defaultGroupCheck.values.length === 0) {
-          console.warn("Default group missing after import, re-adding it.");
-          await this.db.run(`INSERT OR IGNORE INTO \`Group\` (group_name, group_dis) VALUES (?, ?);`, ['默认', '默认卡片组']);
-        }
+      if (!defaultGroupCheck.values || defaultGroupCheck.values.length === 0) {
+        console.warn("默认分组在导入后丢失，重新添加...");
+        await this.db.run(`INSERT OR IGNORE INTO \`Group\` (group_name, group_dis) VALUES (?, ?);`, ['默认', '默认卡片组']);
+        console.log("✓ 默认分组已重新添加");
+      } else {
+        console.log("✓ 默认分组存在");
+      }
 
-
-      console.log(`SQL script imported successfully. Changes reported by script execution: ${changes}`);
-      return { changes: changes, message: 'Import successful. Existing data was cleared before import.' };
+      console.log(`=== 数据库导入完成，总计 ${totalChanges} 行更改 ===`);
+      return { 
+        changes: totalChanges, 
+        message: `导入成功: ${successCount}/${sqlStatements.length} 条语句执行成功，共 ${totalChanges} 行更改` 
+      };
 
     } catch (err: any) {
       console.error('Error during import process (clearing or executing script):', err);
