@@ -18,6 +18,7 @@ const saveWebDAVSettings = () => {
   try {
     configService.setConfig('WEBDAV_SERVER_URL', webdavUrl.value);
     const authToken = btoa(`${webdavUsername.value}:${webdavPassword.value}`);
+    console.log(authToken);
     configService.setConfig('WEBDAV_AUTH_TOKEN', authToken);
     localStorage.setItem('webdavUrl', webdavUrl.value);
     localStorage.setItem('webdavUsername', webdavUsername.value);
@@ -79,12 +80,29 @@ const resetAll = () => {
   localStorage.clear();
   location.reload();
 };
+
+import { SqliteService } from '@/services/sqliteService';
+const sqlite = new SqliteService();
+
+const handleExprot = async () =>  {
+  sql_content.value = (await sqlite.exportToSQL());
+  console.log('Export result: ', sql_content.value);
+}
+
+const sql_content = ref<string>('');
+const handleImport = async () => {
+  await sqlite.importFromSQL(sql_content.value);
+}
 </script>
 
 <template>
   <div class="settings-page">
     <div class="form-container">
       <h1>系统设置</h1>
+
+      <button @click="handleExprot"> Export SQL </button>
+      <button @click="handleImport"> Import SQL </button>
+      <textarea v-model="sql_content" style="height: 500px;"></textarea>
 
       <!-- 用户头像与用户名 -->
       <div class="setting-item avatar-block">

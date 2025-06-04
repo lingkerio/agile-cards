@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, watchEffect, onUnmounted } from 'vue'
 import TopBar from '@/components/TopBar.vue'
 import webdavService from '@/services/webDavService'
-import databaseService from '@/services/__databaseService.ts'
 import { SqliteService } from '@/services/sqliteService'
 import { useAppInitStore } from '@/stores/appInitStore'
 import router from '@/router'
@@ -69,7 +68,7 @@ const filteredCards = computed(() => {
   let filtered = cards.value  // 直接使用 cards，解构时已经获取了 value
 
   if (searchQuery.value && searchQuery.value.startsWith('group::')) {
-    const query = searchQuery.value.slice('group::'.length).toLowerCase();
+    const query = searchQuery.value.slice('group::'.length)
     isSearchGroup.value = group.value.some(g => query === g.title);
     if (isSearchGroup.value) {
       searchGroup.value = group.value.find(g => query === g.title);
@@ -131,16 +130,7 @@ const uploadDatabase = async () => {
     syncMessage.value = '正在上传数据库...';
     showSyncMessage.value = true;
 
-    // 确保数据库连接已关闭
-    if (databaseService.db) {
-      await databaseService.db.close();
-      databaseService.db = null;
-    }
-
     await webdavService.uploadDatabaseToWebDAV('knowledgeCardsDB');
-
-    // 重新初始化数据库连接
-    await databaseService.init();
 
     syncMessage.value = '数据库上传成功！';
     setTimeout(() => {
@@ -165,16 +155,7 @@ const downloadDatabase = async () => {
     syncMessage.value = '正在下载数据库...';
     showSyncMessage.value = true;
 
-    // 确保数据库连接已关闭
-    if (databaseService.db) {
-      await databaseService.db.close();
-      databaseService.db = null;
-    }
-
     await webdavService.downloadDatabaseFromWebDAV('/backup/database.json');
-
-    // 重新初始化数据库连接
-    await databaseService.init();
 
     syncMessage.value = '数据库下载成功！';
     setTimeout(() => {

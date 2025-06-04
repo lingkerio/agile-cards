@@ -41,7 +41,7 @@
 
 import { Capacitor } from '@capacitor/core'
 import { CONFIG } from '../config/config'
-import { SqliteService } from './databaseService'
+import { SqliteService } from './sqliteService'
 
 // 超时设置
 const DEFAULT_TIMEOUT = 60000 // 60秒
@@ -62,7 +62,12 @@ interface WebDAVResult {
   error?: string
 }
 
+const username = 'smallphan@qq.com';
+const password = 'a9vsbw5vrg9wy4vn';
+const TOKEN = btoa(`${username}:${password}`);
+
 const webdavService: WebDAVService = {
+
   // 上传数据库到WebDAV服务器
   async uploadDatabaseToWebDAV(remotePath: string): Promise<void> {
     try {
@@ -71,26 +76,27 @@ const webdavService: WebDAVService = {
       // console.log(`准备导出数据库到WebDAV路径: ${formattedPath}`)
 
       // 检查平台
-      if (Capacitor.getPlatform() === 'web') {
-        // console.log('Web平台不支持完整的SQLite功能，跳过导出')
-        throw new Error('Web平台不支持数据库导出功能，请在移动设备上使用')
-      }
+      // if (Capacitor.getPlatform() === 'web') {
+      //   // console.log('Web平台不支持完整的SQLite功能，跳过导出')
+      //   throw new Error('Web平台不支持数据库导出功能，请在移动设备上使用')
+      // }
 
       // 创建数据库服务实例
       const dbService = new SqliteService()
-      await dbService.initialize()
+      await dbService.initDB()
 
       // 使用 databaseService 导出为 SQL
       // console.log('尝试导出数据库为 SQL 字符串')
       const sqlString = await dbService.exportToSQL()
       // console.log('数据库导出为 SQL 成功')
+      console.log('SQL String:', sqlString);
 
       // 上传到WebDAV
       await this.uploadFileToWebDAV(sqlString, formattedPath, 'text/plain')
       // console.log('数据库上传成功!')
 
       // 关闭数据库连接
-      await dbService.close()
+      await dbService.closeDB()
     } catch (error: any) {
       if (error.response) {
         console.error('WebDAV响应错误:', error.response.status, error.response.data)
@@ -111,10 +117,10 @@ const webdavService: WebDAVService = {
       // console.log(`开始从WebDAV下载数据库: ${formattedPath}`)
 
       // 检查平台
-      if (Capacitor.getPlatform() === 'web') {
-        // console.log('Web平台不支持完整的SQLite功能，跳过下载')
-        throw new Error('Web平台不支持数据库下载功能，请在移动设备上使用')
-      }
+      // if (Capacitor.getPlatform() === 'web') {
+      //   // console.log('Web平台不支持完整的SQLite功能，跳过下载')
+      //   throw new Error('Web平台不支持数据库下载功能，请在移动设备上使用')
+      // }
 
       // 下载SQL数据
       const sqlString = await this.downloadFileFromWebDAV(formattedPath)
@@ -122,7 +128,7 @@ const webdavService: WebDAVService = {
 
       // 创建数据库服务实例
       const dbService = new SqliteService()
-      await dbService.initialize()
+      await dbService.initDB()
 
       // 使用 databaseService 导入 SQL
       // console.log('尝试导入 SQL 数据')
@@ -130,7 +136,7 @@ const webdavService: WebDAVService = {
       // console.log('数据库导入成功!')
 
       // 关闭数据库连接
-      await dbService.close()
+      await dbService.closeDB()
     } catch (error: any) {
       if (error.response) {
         console.error('WebDAV响应错误:', error.response.status, error.response.data)
@@ -150,8 +156,9 @@ const webdavService: WebDAVService = {
     remotePath: string,
     contentType: string = 'text/plain',
   ): Promise<void> {
-    const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
-    // console.log(`开始上传到WebDAV: ${absoluteUrl}`)
+    // const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
+    const absoluteUrl = `/webdav_proxy/dav/${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
+    console.log(`开始上传到WebDAV: ${absoluteUrl}`)
 
     // 确保目录存在
     await this.ensureDirectoryExists(remotePath)
@@ -160,7 +167,8 @@ const webdavService: WebDAVService = {
     try {
       const xhr = new XMLHttpRequest()
       xhr.open('PUT', absoluteUrl, true)
-      xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
+      xhr.setRequestHeader('Authorization', `Basic ${TOKEN}`)
+      // xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
       xhr.setRequestHeader('Content-Type', contentType)
       xhr.timeout = DEFAULT_TIMEOUT
 
@@ -198,14 +206,16 @@ const webdavService: WebDAVService = {
 
   // 使用XMLHttpRequest从WebDAV下载文件
   async downloadFileFromWebDAV(remotePath: string): Promise<any> {
-    const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
+    // const absoluteUrl = `${CONFIG.WEBDAV_SERVER_URL}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
+    const absoluteUrl = `/webdav_proxy/dav/${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
     // console.log(`开始从WebDAV下载: ${absoluteUrl}`)
 
     // 使用XMLHttpRequest方法
     try {
       const xhr = new XMLHttpRequest()
       xhr.open('GET', absoluteUrl, true)
-      xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
+      xhr.setRequestHeader('Authorization', `Basic ${TOKEN}`)
+      // xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
       xhr.responseType = 'text'
       xhr.timeout = DEFAULT_TIMEOUT
 
@@ -230,7 +240,6 @@ const webdavService: WebDAVService = {
       })
 
       if (downloadResult.success && downloadResult.data) {
-        // console.log(`XMLHttpRequest下载成功! 状态码: ${downloadResult.status}`)
         return downloadResult.data
       } else {
         throw new Error(`XMLHttpRequest下载失败: 状态码 ${downloadResult.status}`)
@@ -253,14 +262,16 @@ const webdavService: WebDAVService = {
     // console.log(`检查并创建目录: ${dirPath}`)
 
     // 构造目录URL
-    const dirUrl = `${CONFIG.WEBDAV_SERVER_URL}${dirPath.startsWith('/') ? dirPath.substring(1) : dirPath}/.dir`
+    // const dirUrl = `${CONFIG.WEBDAV_SERVER_URL}${dirPath.startsWith('/') ? dirPath.substring(1) : dirPath}/.dir`
+    const dirUrl = `/webdav_proxy/dav/${dirPath.startsWith('/') ? dirPath.substring(1) : dirPath}/.dir`
     // console.log(`尝试通过PUT请求创建目录标记: ${dirUrl}`)
 
     try {
       // 使用XMLHttpRequest创建目录
       const xhr = new XMLHttpRequest()
       xhr.open('PUT', dirUrl, true)
-      xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
+      xhr.setRequestHeader('Authorization', `Basic ${TOKEN}`)
+      // xhr.setRequestHeader('Authorization', `Basic ${CONFIG.WEBDAV_AUTH_TOKEN}`)
       xhr.setRequestHeader('Content-Type', 'application/octet-stream')
       xhr.timeout = DEFAULT_TIMEOUT
 

@@ -1,4 +1,4 @@
-package com.example.agilecards;
+package com.agile.acards;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,7 +1,7 @@
 export const CONFIG = {
   // WebDAV配置
   WEBDAV_SERVER_URL: 'https://dav.jianguoyun.com/dav/',
-  WEBDAV_AUTH_TOKEN: 'YOUR_AUTH_TOKEN', // 应使用btoa('username:password')生成
+  WEBDAV_AUTH_TOKEN: 'c21hbGxwaGFuQHFxLmNvbTphOXZzYnc1dnJnOXd5NHZu', // 应使用btoa('username:password')生成
   
   // OpenAI配置
   OPENAI_API_KEY: 'your-openai-api-key-here',
