@@ -8,6 +8,7 @@ const sqlite = new SqliteService();
 export async function getOpenAIResponse(prompt: string): Promise<string> {
   try {
     const llmConf = await sqlite.getLLMConfig();
+    if (llmConf.address == '') throw 'LLM API 地址为空！';
     const openai = new OpenAI({
       dangerouslyAllowBrowser: true,
       baseURL: llmConf.address,

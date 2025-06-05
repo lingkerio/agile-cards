@@ -27,6 +27,9 @@ const sqlJsConfig = {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-focus-ring-color: transparent;
+  outline: none;
 }
 
 body {
@@ -60,5 +63,10 @@ body {
 
 html, body {
   scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge/Android WebView */
 }
 </style>

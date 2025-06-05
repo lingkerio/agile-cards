@@ -171,7 +171,7 @@ const webdavService: WebDAVService = {
   ): Promise<void> {
     const sqlite = new SqliteService();
     const davConfig = await sqlite.getDavConfig();
-    if (davConfig.address === '') throw 'WebDAV 地址为空';
+    if (davConfig.address === '') throw 'WebDAV 地址为空！';
 
     const absoluteUrl = `${davConfig.address}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
     console.log(`开始上传到WebDAV: ${absoluteUrl}`)
@@ -288,7 +288,7 @@ const webdavService: WebDAVService = {
   async downloadFileFromWebDAV(remotePath: string): Promise<any> {
     const sqlite = new SqliteService();
     const davConfig = await sqlite.getDavConfig();
-    if (davConfig.address === '') throw 'WebDAV 地址为空';
+    if (davConfig.address === '') throw 'WebDAV 地址为空！';
 
     const absoluteUrl = `${davConfig.address}${remotePath.startsWith('/') ? remotePath.substring(1) : remotePath}`
     console.log(`开始从WebDAV下载: ${absoluteUrl}`)

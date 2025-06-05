@@ -144,7 +144,7 @@ export class SqliteService {
     const result = await this.db.run(`
       INSERT INTO \`Cards\` (card_hash, group_id, question, answer, last_review, next_review) VALUES (?, ?, ?, ?, ?, ?);
       `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now() + 86400000]); // ! 正确逻辑
-    // `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now()]); // # 测试逻辑
+      // `, [await this.cardHash(cards.question, cards.answer ?? ""), cards.group_id, cards.question, cards.answer ?? "", Date.now(), Date.now()]); // # 测试逻辑
     return { changes: result.changes?.changes || 0 };
   }
 
